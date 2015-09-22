@@ -35,7 +35,7 @@
 ;   2015/07/14: James Paul Mason: Wrote script.
 ;-
 PRO PlotDimmingPaper2Figure1IrradianceVariability, REPROCESS_EVE_LEVEL3 = REPROCESS_EVE_LEVEL3, REPROCESS_CMES = REPROCESS_CMES
-; Test comment
+
 ; Setup
 saveloc1 = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/'
 saveloc2 = '/Users/jama6159/Dropbox/Research/Woods_LASP/Papers/2015 Mason 2-2 Week Period/Preparation/Figures/'
