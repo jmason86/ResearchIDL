@@ -1,0 +1,23 @@
+This is the SDO/EVE Solarsoft Codebase. With it, you can retrieve and perform analysis on the SDO/EVE spectrum and lines data.
+<br/><br/> 
+Of course you are welcome to use and examine this code in any way you wish. However, you are probably most interested in the 
+category 'user routines'. In particular, the most useful and requested user routines are listed below:
+<br/><br/>
+<ul>
+<li><a href="./eve_get_data.html" target="main_frame">eve_get_data.pro</a> - Get EVE data products across the Internet from the SDO/EVE data server</li> 
+<li><a href="./eve_read_whole_fits.html" target="main_frame">eve_read_whole_fits.pro</a> - Read a single named FITS file, return as an IDL structure of structures with one field for each HDU</li> 
+<li><a href="./eve_merge_evs.html" target="main_frame">eve_merge_evs.pro</a> - Merge several days' worth of EVE Level 2 spectra data files into a single array, with optional time-averaging</li> 
+<li><a href="./eve_merge_evs.html" target="main_frame">eve_merge_evs.pro</a> - Merge several days' worth of EVE Level 2 lines data files into a single array, with optional time-averaging</li> 
+<li><a href="./eve_process_spectrum.html" target="main_frame">eve_process_spectrum.pro</a> - Run one of your own functions against an array of EVE spectra</li> 
+<li><a href="./stan_bands.html" target="main_frame">stan_bands.pro</a> - Calculate the "Stan bands" from an EVE spectrum</li> 
+</ul>
+
+Quick Start:<br>
+Unpack this file into your ssw folder, where it will create a tree under sdo/eve. Open sswidl, and run the following commands:<br>
+<code>
+eve_get_data,2,2012001,2012001 ;Get all the EVE level 2 data from 2012/001 Jan 01
+stan_spwx_hhmm,2012001         ;Run the example code to generate a Stan Bands space weather 
+                               ;report for 2012/001 Jan 01 in file megs_stan_bands_2012001.txt in your current folder 
+</code> 
+
+ 
