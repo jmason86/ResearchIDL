@@ -43,19 +43,19 @@ PRO FitCoronalDimmingLightCurve, eventNumber = eventNumber, $
 IF ~keyword_set(eventNumber) THEN eventNumber = 28
 
 IF keyword_set(SKIP_BAD_EVENTS) THEN $
-  IF eventNumber EQ 15 OR eventNumber EQ 20 OR eventNumber EQ 23 OR eventNumber EQ 24 OR eventNumber EQ 25 OR eventNumber EQ 27 OR eventNumber EQ 29 OR eventNumber EQ 30 OR eventNumber EQ 32 THEN return
+  IF eventNumber EQ 15 OR eventNumber EQ 20 OR eventNumber EQ 23 OR eventNumber EQ 24 OR eventNumber EQ 27 OR eventNumber EQ 29 OR eventNumber EQ 30 OR eventNumber EQ 32 THEN return
 
 ; Setup
-saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/Fitting/'
+saveloc = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/Fitting/'
 savename = 'Event' + JPMPrintNumber(eventNumber) + ' 171 Å Fit'
 
 ; Restore corrected dimming data
 eventName = 'Event' + JPMPrintNumber(eventNumber)
-restore, '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/EVEPlots/Corrected/' + eventName + '/Warm correction/EVEScaledIrradiances.sav'
-restore, '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/EVEPlots/Corrected/' + eventName + '/Warm correction/ExtrapolatedPreFlareTrend.sav'
+restore, '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/EVEPlots/Corrected/' + eventName + '/Warm correction/EVEScaledIrradiances.sav'
+restore, '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/EVEPlots/Corrected/' + eventName + '/Warm correction/ExtrapolatedPreFlareTrend.sav'
 
 ; Restore measurement errors
-restore, '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/EVEPlots/Corrected/' + eventName + '/Warm correction/UncertaintiesCorrectedEVEDimmingCurves.sav'
+restore, '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/EVEPlots/Corrected/' + eventName + '/Warm correction/UncertaintiesCorrectedEVEDimmingCurves.sav'
 
 ; Convert time
 sod = (eveTimeJD - floor(eveTimeJD[0]) - 0.5) * 86400.
@@ -393,6 +393,7 @@ ENDFOR
 IF fitToUseForDepth EQ 'Parabola' THEN BEGIN
   depthIntensity = parabolaCurve[closest(depthTimeSod, sod, /UPPER)]
   
+  
   ; Extrapolate pre-flare trend
   extrapolatedPreFlareTrendCorrected = correctedPreFlareTrendFits[1, 3] * depthTimeSod + correctedPreFlareTrendFits[0, 3] ; y = ax + b
   extrapolatedPreFlareTrend = fitParameters171[1] * depthTimeSod + fitParameters171[0] ; y = ax + b
@@ -465,6 +466,10 @@ IF fitToUseForSlope EQ '5th Order Poly' THEN BEGIN
   slopeStandardDeviation = stddev(slopeArray)
   circleColor = 'orange'
 ENDIF
+
+; For manually specified best fits, maintain compatibility with StatisticsOfDimmingFits.pro
+; Assume the slope is a more important thing to have fit well than the depth
+bestFit = fitToUseForSlope 
 
 IF ~keyword_set(NO_PLOTS) THEN BEGIN
   IF keyword_set(MANUAL_SELECT_PARAMETERIZATION) THEN useBuffer = 0 ELSE useBuffer = 1
