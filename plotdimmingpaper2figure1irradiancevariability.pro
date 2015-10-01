@@ -37,8 +37,8 @@
 PRO PlotDimmingPaper2Figure1IrradianceVariability, REPROCESS_EVE_LEVEL3 = REPROCESS_EVE_LEVEL3, REPROCESS_CMES = REPROCESS_CMES
 
 ; Setup
-saveloc1 = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/'
-saveloc2 = '/Users/jama6159/Dropbox/Research/Woods_LASP/Papers/2015 Mason 2-2 Week Period/Preparation/Figures/'
+saveloc1 = '/Users/jmason86/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/'
+saveloc2 = '/Users/jmason86/Dropbox/Research/Woods_LASP/Papers/2015 Mason 2-2 Week Period/Preparation/Figures/'
 
 ; Grab EVE data and process
 IF keyword_set(REPROCESS_EVE_LEVEL3) THEN BEGIN
@@ -98,17 +98,21 @@ p1 = plot(eveJD, evePercent171, '3', TITLE = 'Historical Solar Variability', MAR
           XTITLE = 'Time [Year]', XTICKUNITS = 'Years', $
           YTITLE = 'SDO/EVE Daily Average 171 Å [%]', $
           NAME = 'EVE 171 Å')
-p3 = plot(p1.xrange, [0, 0], '--',  /CURRENT, MARGIN = [0.1, 0.1, 0.1, 0.1], AXIS_STYLE = 4,$
+p3 = plot(p1.xrange, [0, 0], '--',  /CURRENT, MARGIN = [0.1, 0.1, 0.1, 0.1], AXIS_STYLE = 4, $
           XRANGE = p1.xrange, $
           YRANGE = p1.yrange)
 p2 = plot(cmeJD, cmesPerDay, 'b2', /CURRENT, MARGIN = [0.1, 0.1, 0.1, 0.1], AXIS_STYLE = 4, $
           XRANGE = p1.xrange, $
           YRANGE = [0, 50], $
           NAME = 'CMEs Per Day')
+p4 = plot(p2.xrange, [mean(cmesPerDay), mean(cmesPerDay)], '--', COLOR = 'blue', /CURRENT, MARGIN = 0.1, AXIS_STYLE = 4, $
+          XRANGE = p2.xrange, $
+          YRANGE = p2.yrange)
 
 ax1 = axis('Y', LOCATION = 'right', TARGET = [p2], TITLE = 'Number of CMEs per Day', COLOR = 'blue')
 ax2 = axis('X', LOCATION = 'top', TARGET = [p2], TICKUNITS = 'Years', TEXT_COLOR = 'white')
-t1 = text(0.1, 0.5, 'Historical Mean')
+t1 = text(0.105, 0.5, 'Historical Mean')
+t2 = text(0.105, 0.2, 'Historical Mean', COLOR = 'blue')
 poly1 = polygon([[periodStart1JD, p2.yrange[0]], [periodStop1JD, p2.yrange[0]], [periodStop1JD, p2.yrange[1]], [periodStart1JD, p2.yrange[1]]], /DATA, TARGET = [p2], $
                 /FILL_BACKGROUND, FILL_COLOR = 'lime green', FILL_TRANSPARENCY = 20)
 poly2 = polygon([[periodStart2JD, p2.yrange[0]], [periodStop2JD, p2.yrange[0]], [periodStop2JD, p2.yrange[1]], [periodStart2JD, p2.yrange[1]]], /DATA, TARGET = [p2], $
