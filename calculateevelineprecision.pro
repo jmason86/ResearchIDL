@@ -62,7 +62,7 @@ precision284 = stdev(eve284[0:endIndex]) / sqrt(numberOfSamplesToAverage)
 precision335 = stdev(eve335[0:endIndex]) / sqrt(numberOfSamplesToAverage)
 
 ; Convert to percentage
-precision94Percent = precision94 / eve94[0:endIndex] * 100.
+precision94Percent = precision94 / eve94[0:endIndex] * 100. 
 precision132Percent = precision132 / eve132[0:endIndex] * 100.
 precision171Percent = precision171 / eve171[0:endIndex] * 100.
 precision177Percent = precision177 / eve177[0:endIndex] * 100.

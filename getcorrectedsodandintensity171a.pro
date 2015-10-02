@@ -39,7 +39,7 @@ sod = (eveTimeJD - floor(eveTimeJD[0]) - 0.5) * 86400.
 
 ; Pull out the 171 Å corrected by 284 Å
 intensity = correctedEVEDimmingCurves[*, 3]
-
+STOP
 save, sod, intensity, filename = 'GetCorrectedSoDAndIntensity171A_RENAME_ME.sav'
 
 END

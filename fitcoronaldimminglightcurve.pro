@@ -34,28 +34,29 @@
 ;   2014/12/31: James Paul Mason: Wrote procedure
 ;   2015/02/12: James Paul Mason: Changed procedure to restore data from the Corrected/Event#/WarmCorrection save files. Added hard-coded time ranges for each event.
 ;   2015/06/01: James Paul Mason: Added MANUAL_SELECT_PARAMETERIZATION keyword and corresponding code, including the hard-code results. 
+;   2015/10/02: James Pual Mason: Removed some bad events after analysis done for dimming paper 2
 ;-
 PRO FitCoronalDimmingLightCurve, eventNumber = eventNumber, $ 
                                  NO_PLOTS = NO_PLOTS, SKIP_BAD_EVENTS = SKIP_BAD_EVENTS, MANUAL_SELECT_PARAMETERIZATION = MANUAL_SELECT_PARAMETERIZATION, $
                                  bestFitOut = bestFit, bestFitChiOut = bestFitChi
 
 ; Hard-code input
-IF ~keyword_set(eventNumber) THEN eventNumber = 28
+IF ~keyword_set(eventNumber) THEN eventNumber = 1
 
 IF keyword_set(SKIP_BAD_EVENTS) THEN $
-  IF eventNumber EQ 15 OR eventNumber EQ 20 OR eventNumber EQ 23 OR eventNumber EQ 24 OR eventNumber EQ 25 OR eventNumber EQ 27 OR eventNumber EQ 29 OR eventNumber EQ 30 OR eventNumber EQ 32 THEN return
+  IF eventNumber EQ 15 OR eventNumber EQ 20 OR eventNumber EQ 23 OR eventNumber EQ 24 OR eventNumber EQ 27 OR eventNumber EQ 30 OR eventNumber EQ 32 THEN return
 
 ; Setup
-saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/Fitting/'
+saveloc = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/Fitting/'
 savename = 'Event' + JPMPrintNumber(eventNumber) + ' 171 Å Fit'
 
 ; Restore corrected dimming data
 eventName = 'Event' + JPMPrintNumber(eventNumber)
-restore, '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/EVEPlots/Corrected/' + eventName + '/Warm correction/EVEScaledIrradiances.sav'
-restore, '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/EVEPlots/Corrected/' + eventName + '/Warm correction/ExtrapolatedPreFlareTrend.sav'
+restore, '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/EVEPlots/Corrected/' + eventName + '/Warm correction/EVEScaledIrradiances.sav'
+restore, '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/EVEPlots/Corrected/' + eventName + '/Warm correction/ExtrapolatedPreFlareTrend.sav'
 
 ; Restore measurement errors
-restore, '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/EVEPlots/Corrected/' + eventName + '/Warm correction/UncertaintiesCorrectedEVEDimmingCurves.sav'
+restore, '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/EVEPlots/Corrected/' + eventName + '/Warm correction/UncertaintiesCorrectedEVEDimmingCurves.sav'
 
 ; Convert time
 sod = (eveTimeJD - floor(eveTimeJD[0]) - 0.5) * 86400.
@@ -72,6 +73,11 @@ IF eventNumber EQ 28 THEN BEGIN
   intensity = correctedEVEDimmingCurves[*, 0] ; 171 Å corrected by 94 Å
   intensityError = uncertaintiesCorrectedEVEDimmingCurves[*, 0]
 ENDIF
+IF eventNumber EQ 32 THEN BEGIN
+  intensity = correctedEVEDimmingCurves[*, 17] ; 195 Å corrected by 211 Å
+  intensityError = uncertaintiesCorrectedEVEDimmingCurves[*, 17]
+ENDIF
+
 ; Ignore NANs if they exist
 intensityError = intensityError[where(finite(intensity))]
 sod = sod[where(finite(intensity))]
@@ -249,7 +255,13 @@ CASE eventNumber OF ; sodSubsetRangeIndices is for zooming in on just the dimmin
     fitToUseForDepth = 'Parabola'
     fitToUseForSlope = 'Parabola'
   END
-  29: sodSubsetRangeIndices = where(sod GE 67090 AND sod LE 75010) ; Event 29 2011220_62050 - Correction looks like it went awry
+  29: BEGIN 
+    sodSubsetRangeIndices = where(sod GE 65090 AND sod LE 71650)
+    depthTimeSod = 19.64 * 3600
+    slopeTimesSod = [18.27 * 3600, 19.04 * 3600]
+    fitToUseForDepth = '5th Order Poly'
+    fitToUseForSlope = '5th Order Poly'
+  END
   30: sodSubsetRangeIndices = where(sod GE 61450 AND sod LE 75490) ; Event 30 2011220_62050 - Effectively duplicate of Event 29
   31: BEGIN ; Event 31 2011221_22570
     sodSubsetRangeIndices = where(sod GE 27250 AND sod LE 34450)
@@ -258,7 +270,13 @@ CASE eventNumber OF ; sodSubsetRangeIndices is for zooming in on just the dimmin
     fitToUseForDepth = '3rd Order Poly'
     fitToUseForSlope = '5th Order Poly'
   END
-  32: sodSubsetRangeIndices = where(sod GE 26770 AND sod LE 34450) ; Event 32 2011221_22570 - Literally duplicate of Event 31
+  32: BEGIN 
+    sodSubsetRangeIndices = where(sod GE 27000 AND sod LE 37800)
+    depthTimeSod = 13.14 * 3600
+    slopeTimesSod = [10.67 * 3600, 12.27 * 3600]
+    fitToUseForDepth = '5th Order Poly'
+    fitToUseForSlope = '5th Order Poly'
+  END
   33: BEGIN ; Event 33 2011221_35530
     sodSubsetRangeIndices = where(sod GE 36250 AND sod LE 52330)
     depthTimeSod = 13.14 * 3600
@@ -363,7 +381,7 @@ ENDFOR
 ;    depthTimeSod = poly3TroughSod
 ;    troughIntensity = poly3TroughIntensity
 ;    arrowColor = 'green'
-;    bestFit = '3rd Order Polynomial'
+;    bestFit = '3rd Order Poly'
 ;    bestFitChi = poly3ReducedChi
 ;    fitToUseForDepth = '3rd Order Poly'
 ;    fitToUseForSlope = '3rd Order Poly'
@@ -372,7 +390,7 @@ ENDFOR
 ;    depthTimeSod = poly4TroughSod
 ;    troughIntensity = poly4TroughIntensity
 ;    arrowColor = 'blue'
-;    bestFit = '4th Order Polynomial'
+;    bestFit = '4th Order Poly'
 ;    bestFitChi = poly4ReducedChi
 ;    fitToUseForDepth = '4th Order Poly'
 ;    fitToUseForSlope = '4th Order Poly'
@@ -381,7 +399,7 @@ ENDFOR
 ;    depthTimeSod = poly5TroughSod
 ;    troughIntensity = poly5TroughIntensity
 ;    arrowColor = 'orange'
-;    bestFit = '5th Order Polynomial'
+;    bestFit = '5th Order Poly'
 ;    bestFitChi = poly5ReducedChi
 ;    fitToUseForDepth = '5th Order Poly'
 ;    fitToUseForSlope = '5th Order Poly'
@@ -392,6 +410,7 @@ ENDFOR
 
 IF fitToUseForDepth EQ 'Parabola' THEN BEGIN
   depthIntensity = parabolaCurve[closest(depthTimeSod, sod, /UPPER)]
+  
   
   ; Extrapolate pre-flare trend
   extrapolatedPreFlareTrendCorrected = correctedPreFlareTrendFits[1, 3] * depthTimeSod + correctedPreFlareTrendFits[0, 3] ; y = ax + b
@@ -465,6 +484,14 @@ IF fitToUseForSlope EQ '5th Order Poly' THEN BEGIN
   slopeStandardDeviation = stddev(slopeArray)
   circleColor = 'orange'
 ENDIF
+
+; For manually specified best fits, maintain compatibility with StatisticsOfDimmingFits.pro
+; Assume the slope is a more important thing to have fit well than the depth
+bestFit = fitToUseForSlope
+IF bestFit EQ 'Parabola' THEN bestFitChi = parabolaReducedChi
+IF bestFit EQ '3rd Order Poly' THEN bestFitChi = poly3ReducedChi
+IF bestFit EQ '4th Order Poly' THEN bestFitChi = poly4ReducedChi
+IF bestFit EQ '5th Order Poly' THEN bestFitChi = poly5ReducedChi
 
 IF ~keyword_set(NO_PLOTS) THEN BEGIN
   IF keyword_set(MANUAL_SELECT_PARAMETERIZATION) THEN useBuffer = 0 ELSE useBuffer = 1

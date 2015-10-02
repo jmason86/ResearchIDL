@@ -35,7 +35,7 @@ PRO Two2WeekPeriodsInEVE
 useEVECorrection = 1 ; 0 = false, 1 = true
 
 ; Setup 
-dataloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/'
+dataloc = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/'
 saveloc = dataloc + 'EVEPlots/'
 wavelengthNames = ['Fe IX 171', 'Fe X 177', 'Fe XI 180', 'Fe XII 195', 'Fe XIII 202']
 textVerticalSpacing = [0.85, 0.82, 0.79, 0.76, 0.73]
@@ -101,10 +101,10 @@ ENDIF ELSE BEGIN ; End no EVE correction, begin using EVE correction
   ; Loop through all events
   FOR eventIndex = 17, n_elements(allPreFlareSods) - 1 DO BEGIN 
     eventName = 'EVEPlots/Corrected/' + 'Event' + strtrim(string(eventIndex + 1), 2)
-    correctedSaveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/' + eventName
+    correctedSaveloc = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/' + eventName
     
     ; Prevent YRANGE blowout for certain events
-    IF eventIndex EQ 26 OR eventIndex EQ 27 THEN yRange = [-5, 5] ELSE yRange = -1
+    IF eventIndex EQ 27 OR eventIndex EQ 28 THEN yRange = [-5, 5] ELSE yRange = -1
     
     ; Call correction code
     EVECoreDimmingCorrection, allYYYYDOY[eventIndex], allYYYYDOY[eventIndex], allEventSelectionSods[eventIndex], REFERENCE_TIME = allPreFlareSods[eventIndex], $
