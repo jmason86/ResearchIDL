@@ -18,6 +18,8 @@
 ;   PNG and EPS versions of plot in 2 directories: 
 ;   1. Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/Fitting/
 ;   2. Dropbox/Research/Woods_LASP/Papers/2015 Mason 2-2 Week Period/Preparation/Figures/EPSs/ and PNGs/
+;   Also produces a .sav of everything in
+;   Dropbox/Research/Woods_LASP/Papers/2015 Mason 2-2 Week Period/Preparation/Figures/IDLSavesets/
 ;
 ; OPTIONAL OUTPUTS:
 ;   None
@@ -61,26 +63,25 @@ b1.XTICKNAME = names
 
 IF numberOfParabolas NE 0 THEN $
   b2 = barplot(parabolaChiXValues, parabolaChis, FILL_COLOR = 'red', TRANSPARENCY = 20, WIDTH = parabolaHistogramWidth, /CURRENT, MARGIN = 0.1, AXIS_STYLE = 4, $
-  XRANGE = b1.XRANGE, $
-  YRANGE = [0, 10])
+               XRANGE = b1.XRANGE, $
+               YRANGE = [0, 10])
 IF numberOf3Polys NE 0 THEN $
   b3 = barplot(poly3ChiXValues, poly3Chis, FILL_COLOR = 'red', TRANSPARENCY = 20, WIDTH = poly3HistogramWidth, /CURRENT, MARGIN = 0.1, AXIS_STYLE = 4, $
-  XRANGE = b1.XRANGE, $
-  YRANGE = [0, 10])
+               XRANGE = b1.XRANGE, $
+               YRANGE = [0, 10])
 IF numberOf4Polys NE 0 THEN $
   b4 = barplot(poly4ChiXValues, poly4Chis, FILL_COLOR = 'red', TRANSPARENCY = 20, WIDTH = poly4HistogramWidth, /CURRENT, MARGIN = 0.1, AXIS_STYLE = 4, $
-  XRANGE = b1.XRANGE, $
-  YRANGE = [0, 10])
+               XRANGE = b1.XRANGE, $
+               YRANGE = [0, 10])
 IF numberOf5Polys NE 0 THEN $
   b5 = barplot(poly5ChiXValues, poly5Chis, FILL_COLOR = 'red', TRANSPARENCY = 20, WIDTH = poly5HistogramWidth, /CURRENT, MARGIN = 0.1, AXIS_STYLE = 4, $
-  XRANGE = b1.XRANGE, $
-  YRANGE = [0, 10])
+               XRANGE = b1.XRANGE, $
+               YRANGE = [0, 10])
 ax1 = axis('Y', LOCATION = 'right', TARGET = [b5], TITLE = 'Reduced $\chi^2$', COLOR = 'red')
 
-p1.save, saveloc1 + 'BestFitHistogram.png'
-p1.save, saveloc1 + 'BestFitHistogram.eps'
-p1.save, saveloc2 + 'PNGs/BestFitHistogram.png'
-p1.save, saveloc2 + 'EPSs/BestFitHistogram.eps'
+b1.save, saveloc1 + 'Best Fit Histogram.png'
+b1.save, saveloc2 + 'PNGs/BestFitHistogram.png'
+b1.save, saveloc2 + 'EPSs/BestFitHistogram.eps'
 save, FILENAME = saveloc2 + 'IDLSavesets/Figure2Saveset.sav', /COMPRESS
 
 END

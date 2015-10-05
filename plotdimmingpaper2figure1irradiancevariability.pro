@@ -21,7 +21,9 @@
 ;   PNG and EPS versions of plot in 2 directories: 
 ;   1. Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/
 ;   2. Dropbox/Research/Woods_LASP/Papers/2015 Mason 2-2 Week Period/Preparation/Figures/EPSs/ and PNGs/
-;
+;   Also produces a .sav of everything in
+;   Dropbox/Research/Woods_LASP/Papers/2015 Mason 2-2 Week Period/Preparation/Figures/IDLSavesets/
+;   
 ; OPTIONAL OUTPUTS:
 ;   None
 ;
@@ -119,7 +121,6 @@ poly2 = polygon([[periodStart2JD, p2.yrange[0]], [periodStop2JD, p2.yrange[0]], 
                 /FILL_BACKGROUND, FILL_COLOR = 'lime green', FILL_TRANSPARENCY = 20)
 
 p1.save, saveloc1 + 'TwoTwoWeekInHistoricalContext.png'
-p1.save, saveloc1 + 'TwoTwoWeekInHistoricalContext.eps'
 p1.save, saveloc2 + 'PNGs/TwoTwoWeekInHistoricalContext.png'
 p1.save, saveloc2 + 'EPSs/TwoTwoWeekInHistoricalContext.eps'
 save, FILENAME = saveloc2 + 'IDLSavesets/Figure1Saveset.sav', /COMPRESS
