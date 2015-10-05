@@ -44,7 +44,7 @@ PRO FitCoronalDimmingLightCurve, eventNumber = eventNumber, $
 IF ~keyword_set(eventNumber) THEN eventNumber = 1
 
 IF keyword_set(SKIP_BAD_EVENTS) THEN $
-  IF eventNumber EQ 15 OR eventNumber EQ 20 OR eventNumber EQ 23 OR eventNumber EQ 24 OR eventNumber EQ 27 OR eventNumber EQ 30 OR eventNumber EQ 32 THEN return
+  IF eventNumber EQ 15 OR eventNumber EQ 20 OR eventNumber EQ 23 OR eventNumber EQ 24 OR eventNumber EQ 27 OR eventNumber EQ 28 OR eventNumber EQ 30 OR eventNumber EQ 32 THEN return
 
 ; Setup
 saveloc = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/Fitting/'

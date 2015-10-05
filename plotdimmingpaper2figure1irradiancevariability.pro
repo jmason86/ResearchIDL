@@ -20,7 +20,7 @@
 ; OUTPUTS:
 ;   PNG and EPS versions of plot in 2 directories: 
 ;   1. Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/
-;   2. Dropbox/Research/Woods_LASP/Papers/2015 Mason 2-2 Week Period/Preparation/Figures/ (for EPS and PNGs/ for the PNG)
+;   2. Dropbox/Research/Woods_LASP/Papers/2015 Mason 2-2 Week Period/Preparation/Figures/EPSs/ and PNGs/
 ;
 ; OPTIONAL OUTPUTS:
 ;   None
@@ -37,8 +37,8 @@
 PRO PlotDimmingPaper2Figure1IrradianceVariability, REPROCESS_EVE_LEVEL3 = REPROCESS_EVE_LEVEL3, REPROCESS_CMES = REPROCESS_CMES
 
 ; Setup
-saveloc1 = '/Users/jmason86/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/'
-saveloc2 = '/Users/jmason86/Dropbox/Research/Woods_LASP/Papers/2015 Mason 2-2 Week Period/Preparation/Figures/'
+saveloc1 = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/'
+saveloc2 = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Papers/2015 Mason 2-2 Week Period/Preparation/Figures/'
 
 ; Grab EVE data and process
 IF keyword_set(REPROCESS_EVE_LEVEL3) THEN BEGIN

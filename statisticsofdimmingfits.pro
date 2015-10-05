@@ -44,7 +44,7 @@ IF keyword_set(INCLUDE_BAD_EVENTS) THEN BEGIN
   numberOfEvents = 36
 ENDIF ELSE BEGIN
   SKIP_BAD_EVENTS = 1
-  numberOfEvents = 36 - 7
+  numberOfEvents = 36 - 8
 ENDELSE
 
 ; Setup
