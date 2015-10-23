@@ -56,28 +56,29 @@ IF n_elements(pol53Chis) EQ 1 THEN poly5HistogramWidth = 0.5 ELSE poly5Histogram
 
 ; Plot histogram
 w = window(DIMENSIONS = [700, 800])
-b1 = barplot(histogramPlaceHolderX, histogramData, TITLE = '"Best Fit" Histogram', /CURRENT, MARGIN = 0.1, AXIS_STYLE = 1, $
-  XTEXT_ORIENTATION = 60, $
-  YTITLE = 'Number of ' + JPMPrintNumber(numberOfEvents) + ' Events With Best Fit', YRANGE = [0, 20])
+b1 = barplot(histogramPlaceHolderX, histogramData, TITLE = '"Best Fit" Histogram', FILL_COLOR = 'dark slate grey', /CURRENT, MARGIN = 0.1, AXIS_STYLE = 1, $
+             XTEXT_ORIENTATION = 60, XMINOR = 0, $
+             YTITLE = 'Number of ' + JPMPrintNumber(numberOfEvents) + ' Events With Best Fit', YRANGE = [0, 20])
 b1.XTICKNAME = names
 
 IF numberOfParabolas NE 0 THEN $
   b2 = barplot(parabolaChiXValues, parabolaChis, FILL_COLOR = 'red', TRANSPARENCY = 20, WIDTH = parabolaHistogramWidth, /CURRENT, MARGIN = 0.1, AXIS_STYLE = 4, $
                XRANGE = b1.XRANGE, $
-               YRANGE = [0, 10])
+               YRANGE = [0, 30])
 IF numberOf3Polys NE 0 THEN $
   b3 = barplot(poly3ChiXValues, poly3Chis, FILL_COLOR = 'red', TRANSPARENCY = 20, WIDTH = poly3HistogramWidth, /CURRENT, MARGIN = 0.1, AXIS_STYLE = 4, $
                XRANGE = b1.XRANGE, $
-               YRANGE = [0, 10])
+               YRANGE = [0, 30])
 IF numberOf4Polys NE 0 THEN $
   b4 = barplot(poly4ChiXValues, poly4Chis, FILL_COLOR = 'red', TRANSPARENCY = 20, WIDTH = poly4HistogramWidth, /CURRENT, MARGIN = 0.1, AXIS_STYLE = 4, $
                XRANGE = b1.XRANGE, $
-               YRANGE = [0, 10])
+               YRANGE = [0, 30])
 IF numberOf5Polys NE 0 THEN $
   b5 = barplot(poly5ChiXValues, poly5Chis, FILL_COLOR = 'red', TRANSPARENCY = 20, WIDTH = poly5HistogramWidth, /CURRENT, MARGIN = 0.1, AXIS_STYLE = 4, $
                XRANGE = b1.XRANGE, $
-               YRANGE = [0, 10])
-ax1 = axis('Y', LOCATION = 'right', TARGET = [b5], TITLE = 'Reduced $\chi^2$', COLOR = 'red')
+               YRANGE = [0, 30])
+ax1 = axis('X', LOCATION = 'top', TARGET = [b5], TEXT_COLOR = 'white', MINOR = 0)
+ax2 = axis('Y', LOCATION = 'right', TARGET = [b5], TITLE = 'Reduced $\chi^2$', COLOR = 'red')
 
 b1.save, saveloc1 + 'Best Fit Histogram.png'
 b1.save, saveloc2 + 'PNGs/BestFitHistogram.png'

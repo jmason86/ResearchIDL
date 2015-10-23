@@ -99,12 +99,12 @@ ENDIF ELSE BEGIN ; End no EVE correction, begin using EVE correction
   ticObject22Week = TIC()
   
   ; Loop through all events
-  FOR eventIndex = 17, n_elements(allPreFlareSods) - 1 DO BEGIN 
+  FOR eventIndex = 0, n_elements(allPreFlareSods) - 1 DO BEGIN 
     eventName = 'EVEPlots/Corrected/' + 'Event' + strtrim(string(eventIndex + 1), 2)
     correctedSaveloc = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/' + eventName
     
     ; Prevent YRANGE blowout for certain events
-    IF eventIndex EQ 27 OR eventIndex EQ 28 THEN yRange = [-5, 5] ELSE yRange = -1
+    IF eventIndex EQ 28 OR eventIndex EQ 29 THEN yRange = [-5, 5] ELSE yRange = -1
     
     ; Call correction code
     EVECoreDimmingCorrection, allYYYYDOY[eventIndex], allYYYYDOY[eventIndex], allEventSelectionSods[eventIndex], REFERENCE_TIME = allPreFlareSods[eventIndex], $

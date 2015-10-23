@@ -68,12 +68,19 @@ ENDIF ELSE restore,                              saveloc1 + 'Historical EVE Data
 
 ; Grab CME data and process
 IF keyword_set(REPROCESS_CMES) THEN BEGIN
-  readcol, saveloc1 + 'Historical CME Data During EVE Era.csv', cmeDate, cmeUtc, format = 'a, a', DELIMITER = ',', /SILENT
+  readcol, saveloc1 + 'Historical CME Data All.csv', cmeDate, cmeUtc, format = 'a, a', DELIMITER = ',', SKIPLINE = 1, /SILENT
   
   ; Loop through all CME occurrences and sum them up per day, store in arrays cmeJD and cmesPerDay
   previousDay = '01' & numberOfCmesInDay = 0 & cmeJD = !NULL & cmesPerDay = !NULL
   FOR cmeLoop = 0, n_elements(cmeDate) - 1 DO BEGIN
+    year = strmid(cmeDate[cmeLoop], 0, 4)
+    month = strmid(cmeDate[cmeLoop], 5, 2)
     day = strmid(cmeDate[cmeLoop], 1, 2, /REVERSE_OFFSET)
+    
+    ; Only start storing data for 2008 and to the end of EVE MEGS-A
+    IF year LT 2008 THEN CONTINUE
+    IF year EQ 2014 AND month EQ '06' THEN BREAK
+    
     IF day EQ previousDay THEN BEGIN
       numberOfCmesInDay++
     ENDIF ELSE BEGIN
@@ -96,14 +103,14 @@ periodStart2JD = JPMyyyydoy2jd(2011213)
 periodStop2JD = JPMyyyydoy2jd(2011226)
 
 ; Produce plot
-p1 = plot(eveJD, evePercent171, '3', TITLE = 'Historical Solar Variability', MARGIN = [0.1, 0.1, 0.1, 0.1], AXIS_STYLE = 1, $
-          XTITLE = 'Time [Year]', XTICKUNITS = 'Years', $
+p1 = plot(eveJD, evePercent171, '3', TITLE = 'Historical Solar Variability', MARGIN = 0.1, AXIS_STYLE = 1, $
+          XTITLE = 'Time [Year]', XRANGE = [2454466.500000, 2457023.500000], XTICKUNITS = 'Years', $
           YTITLE = 'SDO/EVE Daily Average 171 Å [%]', $
           NAME = 'EVE 171 Å')
-p3 = plot(p1.xrange, [0, 0], '--',  /CURRENT, MARGIN = [0.1, 0.1, 0.1, 0.1], AXIS_STYLE = 4, $
+p3 = plot(p1.xrange, [0, 0], '--',  /CURRENT, MARGIN = 0.1, AXIS_STYLE = 4, $
           XRANGE = p1.xrange, $
           YRANGE = p1.yrange)
-p2 = plot(cmeJD, cmesPerDay, 'b2', /CURRENT, MARGIN = [0.1, 0.1, 0.1, 0.1], AXIS_STYLE = 4, $
+p2 = plot(cmeJD, cmesPerDay, 'b2', /CURRENT, MARGIN = 0.1, AXIS_STYLE = 4, $
           XRANGE = p1.xrange, $
           YRANGE = [0, 50], $
           NAME = 'CMEs Per Day')
@@ -113,8 +120,8 @@ p4 = plot(p2.xrange, [mean(cmesPerDay), mean(cmesPerDay)], '--', COLOR = 'blue',
 
 ax1 = axis('Y', LOCATION = 'right', TARGET = [p2], TITLE = 'Number of CMEs per Day', COLOR = 'blue')
 ax2 = axis('X', LOCATION = 'top', TARGET = [p2], TICKUNITS = 'Years', TEXT_COLOR = 'white')
-t1 = text(0.105, 0.5, 'Historical Mean')
-t2 = text(0.105, 0.2, 'Historical Mean', COLOR = 'blue')
+t1 = text(0.105, 0.5, 'Period Mean')
+t2 = text(0.105, 0.2, 'Period Mean', COLOR = 'blue')
 poly1 = polygon([[periodStart1JD, p2.yrange[0]], [periodStop1JD, p2.yrange[0]], [periodStop1JD, p2.yrange[1]], [periodStart1JD, p2.yrange[1]]], /DATA, TARGET = [p2], $
                 /FILL_BACKGROUND, FILL_COLOR = 'lime green', FILL_TRANSPARENCY = 20)
 poly2 = polygon([[periodStart2JD, p2.yrange[0]], [periodStop2JD, p2.yrange[0]], [periodStop2JD, p2.yrange[1]], [periodStart2JD, p2.yrange[1]]], /DATA, TARGET = [p2], $

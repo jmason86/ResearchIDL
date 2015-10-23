@@ -48,6 +48,8 @@
 ;     2015/07/28: James Paul Mason: Added YRANGE optional input to pass into the plot command. 
 ;     2015/08/05: James Paul Mason: Caught a mistake that was causing uncertaintines to be calculated wrong due to the peak index referencing the 
 ;                                   peak match window subarray rather than the full lightcurve array. 
+;     2015/10/12: James Paul Mason: Introduced a fudge factor to deal with an event having a bright peak value of 0, that causes scaleFactor -> infinity. 
+;                                   Now if brightPeak = 0, it forces brightPeak to 1E-3
 ;-
 PRO EVECoreDimmingCorrection, yyyydoyStart, yyyydoyEnd, eventPeakSOD, eventName, $ 
                               NUMBER_OF_10s_INTEGRATIONS_TO_AVERAGE = number_of_10s_integrations_to_average, REFERENCE_TIME = reference_time, $ 
@@ -150,6 +152,7 @@ FOR i = 0, n_elements(dimNames) - 1 DO BEGIN
     indexCorrespondingto120Minutes = 120 * 60 / (number_of_10s_integrations_to_average * 10)
     dimPeak = max(dimmingCurves[((eventPeakIndex - indexCorrespondingto120Minutes) > 0):((eventPeakIndex + indexCorrespondingto120Minutes) < n_elements(eveTimeSOD)-1), i], dimMaxIndex)
     brightPeak = max(brighteningCurves[((eventPeakIndex - indexCorrespondingto120Minutes) > 0):((eventPeakIndex + indexCorrespondingto120Minutes) < n_elements(eveTimeSOD)-1), j], brightMaxIndex)
+    IF brightPeak EQ 0 THEN brightPeak = 1E-3 ; Else will get scaleFactor = infinity
     scaleFactor = dimPeak / brightPeak 
     
     ; Perform correction

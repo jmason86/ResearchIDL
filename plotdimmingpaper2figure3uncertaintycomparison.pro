@@ -26,7 +26,7 @@
 ;
 ; RESTRICTIONS:
 ;   Requires JPMPrintNumber
-;   Requires the Event14 171 Å Fit.sav file output from FitCoronalDimmingLightCurve.pro
+;   Requires the Event15 171 Å Fit.sav file output from FitCoronalDimmingLightCurve.pro
 ;
 ; EXAMPLE:
 ;   Just run it!
@@ -40,11 +40,11 @@ PRO PlotDimmingPaper2Figure3UncertaintyComparison
 saveloc1 = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/Fitting/'
 saveloc2 = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Papers/2015 Mason 2-2 Week Period/Preparation/Figures/'
 
-restore, saveloc1 + 'Event14 171 Å Fit.sav'
+restore, saveloc1 + 'Event15 171 Å Fit.sav'
 
 ; Error plot
 p1 = errorplot(sod/3600., intensity, intensityError, '2', $
-               TITLE = '24 February 2011 Dimming Fits', $
+               TITLE = '2011 February 24 Dimming Fits', $
                XTITLE = 'UTC Time [Hour]', $
                YTITLE = 'Pre-flare Relative Intensity [%]', $
                NAME = 'EVE Fe IX 171 Å')
@@ -67,8 +67,8 @@ t2 = text(0.90, 0.78, 'Parabola $\chi^2$: '       + JPMPrintNumber(parabolaReduc
 t3 = text(0.90, 0.74, '3rd Order Poly $\chi^2$: ' + JPMPrintNumber(poly3ReducedChi),    ALIGNMENT = 1, FONT_COLOR = 'green',  FONT_STYLE = bestChiBoolArray[1])
 t4 = text(0.90, 0.70, '4th Order Poly $\chi^2$: ' + JPMPrintNumber(poly4ReducedChi),    ALIGNMENT = 1, FONT_COLOR = 'blue',   FONT_STYLE = bestChiBoolArray[2])
 t5 = text(0.90, 0.66, '5th Order Poly $\chi^2$: ' + JPMPrintNumber(poly5ReducedChi),    ALIGNMENT = 1, FONT_COLOR = 'orange', FONT_STYLE = bestChiBoolArray[3])
-t6 = text(0.15, 0.20, 'Dimming Depth = ' + JPMPrintNumber(depthIntensity) + '%', FONT_COLOR = arrowColor, FONT_STYLE = 1)
-t7 = text(0.15, 0.16, 'Dimming Slope = ' + JPMPrintNumber(slope) + ' ± ' + JPMPrintNumber(slopeStandardDeviation) + '%/hour', FONT_COLOR = circleColor, FONT_STYLE = 1)
+t6 = text(0.15, 0.20, 'Dimming Depth = ' + JPMPrintNumber(depthIntensity) + ' ± ' + JPMPrintNumber(depthUncertainty) + '%', FONT_COLOR = arrowColor, FONT_STYLE = 1)
+t7 = text(0.15, 0.16, 'Dimming Slope = ' + JPMPrintNumber(slope) + ' ± ' + JPMPrintNumber(slopeUncertainty) + '%/hour', FONT_COLOR = circleColor, FONT_STYLE = 1)
 
 p1.save, saveloc1 + 'Uncertainty Comparison.png'
 p1.save, saveloc2 + 'PNGs/UncertaintyComparison.png'
