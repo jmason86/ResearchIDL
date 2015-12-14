@@ -44,10 +44,11 @@ PRO FitCoronalDimmingLightCurve, eventNumber = eventNumber, $
                                  bestFitOut = bestFit, bestFitChiOut = bestFitChi
 
 ; Hard-code input
-IF ~keyword_set(eventNumber) THEN eventNumber = 30
+IF ~keyword_set(eventNumber) THEN eventNumber = 38
 
 IF keyword_set(SKIP_BAD_EVENTS) THEN $
-  IF eventNumber EQ 9 OR eventNumber EQ 21 OR eventNumber EQ 24 OR eventNumber EQ 25 OR eventNumber EQ 28 OR eventNumber EQ 29 OR eventNumber EQ 31 OR eventNumber EQ 33 THEN return
+  IF eventNumber EQ 9 OR eventNumber EQ 21 OR eventNumber EQ 22 OR eventNumber EQ 24 OR eventNumber EQ 25 OR eventNumber EQ 28 $ 
+  OR eventNumber EQ 29 OR eventNumber EQ 31 OR eventNumber EQ 33 THEN return
 
 ; Setup
 saveloc = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/Fitting/'
@@ -315,6 +316,13 @@ CASE eventNumber OF ; sodSubsetRangeIndices is for zooming in on just the dimmin
     sodSubsetRangeIndices = where(sod GE 23530 AND sod LE 41290)
     depthTimeSod = 11.37 * 3600
     slopeTimesSod = [6.935 * 3600, 10.84 * 3600]
+    fitToUseForDepth = '5th Order Poly'
+    fitToUseForSlope = '5th Order Poly'
+  END
+  38: BEGIN ; Event 38 2010219_?
+    sodSubsetRangeIndices = where(sod GE 61200 AND sod LE 79200)
+    depthTimeSod = 20.04 * 3600
+    slopeTimesSod = [18.14 * 3600, 19.30 * 3600]
     fitToUseForDepth = '5th Order Poly'
     fitToUseForSlope = '5th Order Poly'
   END

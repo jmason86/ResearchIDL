@@ -104,7 +104,7 @@ periodStop2JD = JPMyyyydoy2jd(2011226)
 
 ; Produce plot
 p1 = plot(eveJD, evePercent171, '3', TITLE = 'Historical Solar Variability', MARGIN = 0.1, AXIS_STYLE = 1, $
-          XTITLE = 'Time [Year]', XRANGE = [2454466.500000, 2457023.500000], XTICKUNITS = 'Years', $
+          XTITLE = 'Time: 2011', XRANGE = [2455562.5, 2455927.5], XTICKUNITS = 'Months', $
           YTITLE = 'SDO/EVE Daily Average 171 Å [%]', $
           NAME = 'EVE 171 Å')
 p3 = plot(p1.xrange, [0, 0], '--',  /CURRENT, MARGIN = 0.1, AXIS_STYLE = 4, $
@@ -119,9 +119,9 @@ p4 = plot(p2.xrange, [mean(cmesPerDay), mean(cmesPerDay)], '--', COLOR = 'blue',
           YRANGE = p2.yrange)
 
 ax1 = axis('Y', LOCATION = 'right', TARGET = [p2], TITLE = 'Number of CMEs per Day', COLOR = 'blue')
-ax2 = axis('X', LOCATION = 'top', TARGET = [p2], TICKUNITS = 'Years', TEXT_COLOR = 'white')
-t1 = text(0.105, 0.5, 'Period Mean')
-t2 = text(0.105, 0.2, 'Period Mean', COLOR = 'blue')
+ax2 = axis('X', LOCATION = 'top', TARGET = [p2], TICKUNITS = 'Months', TEXT_COLOR = 'white')
+t1 = text(0.7, 0.5, '2010-2014 Mean')
+t2 = text(0.67, 0.13, '2008-2015 Mean', COLOR = 'blue')
 poly1 = polygon([[periodStart1JD, p2.yrange[0]], [periodStop1JD, p2.yrange[0]], [periodStop1JD, p2.yrange[1]], [periodStart1JD, p2.yrange[1]]], /DATA, TARGET = [p2], $
                 /FILL_BACKGROUND, FILL_COLOR = 'lime green', FILL_TRANSPARENCY = 20)
 poly2 = polygon([[periodStart2JD, p2.yrange[0]], [periodStop2JD, p2.yrange[0]], [periodStop2JD, p2.yrange[1]], [periodStart2JD, p2.yrange[1]]], /DATA, TARGET = [p2], $

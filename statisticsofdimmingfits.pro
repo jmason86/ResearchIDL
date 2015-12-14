@@ -41,10 +41,10 @@ PRO StatisticsOfDimmingFits, INCLUDE_BAD_EVENTS = INCLUDE_BAD_EVENTS, REPROCESS_
 ; Defaults
 IF keyword_set(INCLUDE_BAD_EVENTS) THEN BEGIN
   SKIP_BAD_EVENTS = 0
-  numberOfEvents = 37
+  numberOfEvents = 38
 ENDIF ELSE BEGIN
   SKIP_BAD_EVENTS = 1
-  numberOfEvents = 37 - 8
+  numberOfEvents = 38 - 9
 ENDELSE
 
 ; Setup
@@ -57,7 +57,7 @@ IF keyword_set(REPROCESS_FITS) THEN BEGIN
   
   ; Loop through all events and store best fit information 
   storageIndex = 0
-  FOR eventNumber = 1, 37 DO BEGIN
+  FOR eventNumber = 1, 38 DO BEGIN
     bestFit = !NULL
     FitCoronalDimmingLightCurve, eventNumber = eventNumber, bestFitOut = bestFit, bestFitChiOut = bestFitChi, SKIP_BAD_EVENTS = SKIP_BAD_EVENTS
     IF bestFit EQ !NULL THEN CONTINUE
