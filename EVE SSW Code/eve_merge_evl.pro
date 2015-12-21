@@ -61,7 +61,13 @@ function eve_merge_evl,start_yyyydoy,stop_yyyydoy,n_average=n_average,meta=meta,
       end ;else stop
     end
   end
-
+  
+  ; 2015/12/16 JPM validity check
+  IF result EQ !NULL THEN BEGIN
+    message, /INFO, 'You likely do not have access to the EVE data. Make sure you are on a machine with EVE_DATA environment set and pointing to somewhere you currently have access to.'
+    STOP
+  ENDIF
+  
   if n_average gt 1 then begin
     n_new_result=n_elements(result)/n_average
     new_result=result[0:*:n_average] ;This way we get all the timestamps and stuff

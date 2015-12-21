@@ -171,7 +171,7 @@ FOR i = 0, n_elements(dimNames) - 1 DO BEGIN
     ; Store the left and right times of the 4 hour time window
     timeWindowLeftJD = eveTimeJD[(eventPeakIndex - indexCorrespondingto120Minutes) > 0]
     timeWindowRightJD = eveTimeJD[(eventPeakIndex + indexCorrespondingto120Minutes) < n_elements(eveTimeSOD)-1]
-    
+
     ; Create plots of corrected lines
     p1 = plot(eveTimeJD, dimmingCurves[*, i], 'r2', /BUFFER, $
               TITLE = eventName + ', YYYYDOY: ' + strtrim(string(yyyydoyStart, format = '(i7)'), 2) + ', SOD: ' + strtrim(fix(eventPeakSOD), 2), $
@@ -186,6 +186,8 @@ FOR i = 0, n_elements(dimNames) - 1 DO BEGIN
                     /FILL_BACKGROUND, FILL_COLOR = 'lime green', TRANSPARENCY = 50, $
                     NAME = 'Peak Match Window')
     t1 = text((timeWindowRightJD - timeWindowLeftJD) / 2. + timeWindowLeftJD, p3.yrange[0], '$Peak \n Match \n Window$', /DATA, ALIGNMENT = 0.5, COLOR = 'white')
+    p4 = plot([eveTimeJD[referenceIndex], eveTimeJD[referenceIndex]], p1.yrange, '--', /OVERPLOT)
+    t2 = text(eveTimeJD[referenceIndex], p1.yrange[1], 'Pre-flare Time', /DATA, ORIENTATION = 90, ALIGNMENT = 1)
     leg = legend(TARGET = [p1, p2, p3, poly1], POSITION = [0.92, 0.88])
     p1.save, saveloc + dimNames[i] + ' by ' + brightNames[j] + '.png'
     

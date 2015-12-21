@@ -12,8 +12,13 @@
 ;   None
 ;
 ; KEYWORD PARAMETERS:
-;   None
-;
+;   FIT_3D_ONLY: Set this to only analyze the CME data that was derived with 3D methods
+;                Needs to be run anytime parameters change to generate the saveset that 
+;                will be restored for creating the published plot, which includes a red-dashed
+;                line for the 3D line fit. 
+;   FIT_HIGH_MASS_ONLY: Same idea as above except for fitting CME masses above 1E15 g
+;   FIT_LOW_MASS_ONLY: Same idea as above except for fitting CME masses below 1E15 g
+;   
 ; OUTPUTS:
 ;   PNG and EPS versions of plot in 2 directories:
 ;   1. Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/
@@ -35,54 +40,94 @@
 ;   2015/10/09: James Paul Mason: Significant changes to expand linfit uncertainty grey polygon out by sigma of fits. 
 ;                                 Also flipped x and y axes but am not going to go to the trouble of changing related variable names. 
 ;   2015/12/08: James Paul Mason: Updated to handle the new upper/lower limits for mass/velocity agreed upon by CME co-authors
+;   2015/12/21: James Paul Mason: Can handle fitting 3D only, high or low mass only, and should now be ready for final round of revisions by co-authors
 ;-
-PRO PlotDimmingPaper2Figure4SlopeVsSpeedAndDepthVsMass
+PRO PlotDimmingPaper2Figure4SlopeVsSpeedAndDepthVsMass, FIT_3D_ONLY = FIT_3D_ONLY, FIT_HIGH_MASS_ONLY = FIT_HIGH_MASS_ONLY, FIT_LOW_MASS_ONLY = FIT_LOW_MASS_ONLY
 
 ; Setup
 saveloc1 = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/'
 saveloc2 = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Papers/2015 Mason 2-2 Week Period/Preparation/Figures/'
 
 ; Hard-code for plot annotated 3D-derived CME parameters
-cmeParametersFrom3DIndices = [7, 9, 10, 31, 32, 35]
-cmeParametersFrom2014Paper = [38]
+cmeParametersFrom3DEvents = [7, 9, 10, 31, 32, 35]
+cmeParametersFrom3DIndices = cmeParametersFrom3DEvents - 1
+cmeParametersFrom2014Paper = [37] ; 37 is the index, 38 is the event
 
 ; Load the the parameterized values
-readcol, saveloc1 + 'Two Two Week Period Event List Export With CME Span 20151207.csv', eventNumber, daveJunk, speeds, speedErrors, speedLowerLimit, speedUpperLimit, $
-                                                                                        masses, massErrors, massLowerLimit, massUpperLimit, $
-                                                                                        depths, depthErrors, slopes, slopeErrors, cmeSpan, $
-                                                                                        SKIPLINE = 1, /PRESERVE_NULL, /SILENT, $
-                                                                                        format = 'f, a, f, f, f, f, f, f, f, f, f, f, f, f'
+readcol, saveloc1 + 'Two Two Week Period Event List Export 20151221.csv', eventNumber, speeds, speedErrors, speedLowerLimit, speedUpperLimit, $
+                                                                          masses, massErrors, massLowerLimit, massUpperLimit, $
+                                                                          depths, depthErrors, slopes, slopeErrors, SKIPLINE = 1, /PRESERVE_NULL, /SILENT, $
+                                                                          format = 'f, f, f, f, f, f, f, f, f, f, f, f, f'
 ;readcol, saveloc1 + 'Two Two Week Period Event List Export 20151207.csv', eventNumber, daveJunk, speeds, speedErrors, speedLowerLimit, speedUpperLimit, $
 ;                                                                          masses, massErrors, massLowerLimit, massUpperLimit, $
 ;                                                                          depths, depthErrors, slopes, slopeErrors, SKIPLINE = 1, /PRESERVE_NULL, /SILENT, $
 ;                                                                          format = 'f, a, f, f, f, f, f, f, f, f, f, f, f, f'
-                                                                          
+;readcol, saveloc1 + 'Two Two Week Period Event List Export With CME Span 20151207.csv', eventNumber, daveJunk, speeds, speedErrors, speedLowerLimit, speedUpperLimit, $
+;                                                                                        masses, massErrors, massLowerLimit, massUpperLimit, $
+;                                                                                        depths, depthErrors, slopes, slopeErrors, cmeSpan, $
+;                                                                                        SKIPLINE = 1, /PRESERVE_NULL, /SILENT, $
+;                                                                                        format = 'f, a, f, f, f, f, f, f, f, f, f, f, f, f, f'
+;readcol, saveloc1 + 'Two Two Week Period Event List Export With Flare Type 20151207.csv', eventNumber, daveJunk, speeds, speedErrors, speedLowerLimit, speedUpperLimit, $
+;                                                                                          masses, massErrors, massLowerLimit, massUpperLimit, $
+;                                                                                          depths, depthErrors, slopes, slopeErrors, flareType, $
+;                                                                                          SKIPLINE = 1, /PRESERVE_NULL, /SILENT, $
+;                                                                                          format = 'f, a, f, f, f, f, f, f, f, f, f, f, f, f, a'
+;readcol, saveloc1 + 'Two Two Week Period Event List Export With Flare Class 20151207.csv', eventNumber, daveJunk, speeds, speedErrors, speedLowerLimit, speedUpperLimit, $
+;                                                                                          masses, massErrors, massLowerLimit, massUpperLimit, $
+;                                                                                          depths, depthErrors, slopes, slopeErrors, flareClass, $
+;                                                                                          SKIPLINE = 1, /PRESERVE_NULL, /SILENT, $
+;                                                                                          format = 'f, a, f, f, f, f, f, f, f, f, f, f, f, f, a'
+                                                                     
 ; Use only 3D data
-;speeds = speeds[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
-;speedErrors = speedErrors[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
-;speedLowerLimit = speedLowerLimit[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
-;speedUpperLimit = speedUpperLimit[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
-;masses = masses[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
-;massErrors = massErrors[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
-;massLowerLimit = massLowerLimit[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
-;massUpperLimit = massUpperLimit[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
-;depths = depths[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
-;depthErrors = depthErrors[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
-;slopes = slopes[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
-;slopeErrors = slopeErrors[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
+IF keyword_set(FIT_3D_ONLY) THEN BEGIN
+  speeds = speeds[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
+  speedErrors = speedErrors[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
+  speedLowerLimit = speedLowerLimit[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
+  speedUpperLimit = speedUpperLimit[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
+  masses = masses[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
+  massErrors = massErrors[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
+  massLowerLimit = massLowerLimit[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
+  massUpperLimit = massUpperLimit[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
+  depths = depths[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
+  depthErrors = depthErrors[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
+  slopes = slopes[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
+  slopeErrors = slopeErrors[[cmeParametersFrom3DIndices, cmeParametersFrom2014Paper]]
+  
+  ; Fit looks horrible so Tom suggested adding a (0, 0) ± 0 point
+  ; Can't use actual 0 though because that's the no-data flag until next step of code
+  speeds = [1E-3, speeds]
+  speedErrors = [1E-3, speedErrors]
+  masses = [1E-3, masses]
+  massErrors = [min(massErrors), massErrors] ; < 8.5 causes a poly_fit error so just use minimum error
+  depths = [1E-3, depths]
+  depthErrors = [1E-3, depthErrors]
+  slopes = [1E-3, slopes]
+  slopeErrors = [1E-3, slopeErrors]
+ENDIF ELSE restore, saveloc1 + 'Correlation Fits 3D CMEs Only.sav'
+
+IF keyword_set(FIT_HIGH_MASS_ONLY) THEN masses[where(masses LT 1E15)] = 0
+IF keyword_set(FIT_LOW_MASS_ONLY) THEN BEGIN
+  masses = [1E-3, masses]
+  massErrors = [min(massErrors[where(massErrors GT 1E5)]), massErrors]
+  massLowerLimit = [min(massLowerLimit[where(massLowerLimit GT 1E5)]), massLowerLimit] ; Lowest lower limit (0 causes crash)
+  massUpperLimit = [massLowerLimit[0] + 4.3E13, massUpperLimit] ; Makes for the smallest range
+  depths = [1E-3, depths]
+  depthErrors = [1E-3, depthErrors]
+  masses[where(masses GE 1E15)] = 0
+ENDIF
 
 ; The /NAN keyword for readcol doesn't do what its supposed to (0 values -> NAN) so have to do it manually
-speeds[where(speeds EQ 0)] = !VALUES.F_NAN
-speedErrors[where(speedErrors EQ 0 AND speedUpperLimit EQ 0)] = !VALUES.F_NAN
-masses[where(masses EQ 0)] = !VALUES.F_NAN
-massErrors[where(massErrors EQ 0 AND massUpperLimit EQ 0)] = !VALUES.F_NAN
-depths[where(depths EQ 0)] = !VALUES.F_NAN
-depthErrors[where(depthErrors EQ 0)] = !VALUES.F_NAN
-slopes[where(slopes EQ 0)] = !VALUES.F_NAN
-slopeErrors[where(slopeErrors EQ 0)] = !VALUES.F_NAN
+IF where(speeds EQ 0) NE [-1] THEN speeds[where(speeds EQ 0)] = !VALUES.F_NAN
+IF where(speedErrors EQ 0 AND speedUpperLimit EQ 0) NE [-1] THEN speedErrors[where(speedErrors EQ 0 AND speedUpperLimit EQ 0)] = !VALUES.F_NAN
+IF where(masses EQ 0) NE [-1] THEN masses[where(masses EQ 0)] = !VALUES.F_NAN
+IF where(massErrors EQ 0 AND massUpperLimit EQ 0) NE [-1] THEN massErrors[where(massErrors EQ 0 AND massUpperLimit EQ 0)] = !VALUES.F_NAN
+IF where(depths EQ 0) NE [-1] THEN depths[where(depths EQ 0)] = !VALUES.F_NAN
+IF where(depthErrors EQ 0) NE [-1] THEN depthErrors[where(depthErrors EQ 0)] = !VALUES.F_NAN
+IF where(slopes EQ 0) NE [-1] THEN slopes[where(slopes EQ 0)] = !VALUES.F_NAN
+IF where(slopeErrors EQ 0) NE [-1] THEN slopeErrors[where(slopeErrors EQ 0)] = !VALUES.F_NAN
 
 goodSpeedAndSlopeIndices = where(finite(speeds) AND finite(speedErrors) AND finite(slopes) AND finite(slopeErrors), numberOfGoodSpeedAndSlopes)
-goodDepthAndMassIndices = where(finite(depths) AND  finite(depthErrors) AND finite(masses) AND finite(massErrors), numberOfGoodDepthAndMasses)
+goodDepthAndMassIndices = where(finite(depths)  AND finite(depthErrors) AND finite(masses) AND finite(massErrors), numberOfGoodDepthAndMasses)
 
 ; Hold onto the full 38 events in separate variables for plotting separately
 speedsAllEvents = speeds
@@ -110,12 +155,13 @@ slopeErrors = slopeErrors[goodSpeedAndSlopeIndices]
 
 ; For Dave's 1-viewpoint CME parameters that have lower-upper limits, compute midpoint and corresponding uncertainty to result in same range
 singleViewPointCmeIndices = where(speedUpperLimit NE 0)
+IF singleViewPointCmeIndices NE [-1] THEN $
 FOR i = 0, n_elements(singleViewPointCmeIndices) - 1 DO BEGIN
   speeds[singleViewPointCmeIndices[i]] = mean([speedLowerLimit[singleViewPointCmeIndices[i]], speedUpperLimit[singleViewPointCmeIndices[i]]])
   speedErrors[singleViewPointCmeIndices[i]] = speedUpperLimit[singleViewPointCmeIndices[i]] - speeds[singleViewPointCmeIndices[i]]
-
 ENDFOR
 singleViewPointCmeIndices = where(massUpperLimit NE 0)
+IF singleViewPointCmeIndices NE [-1] THEN $
 FOR i = 0, n_elements(singleViewPointCmeIndices) - 1 DO BEGIN
   masses[singleViewPointCmeIndices[i]] = mean([massLowerLimit[singleViewPointCmeIndices[i]], massUpperLimit[singleViewPointCmeIndices[i]]])
   massErrors[singleViewPointCmeIndices[i]] = massUpperLimit[singleViewPointCmeIndices[i]] - masses[singleViewPointCmeIndices[i]]
@@ -171,7 +217,7 @@ yLineSpeedSlope_SpeedError_MinusSigma = (fitSpeedSlope_SpeedError[0] - sigmaSpee
 yLineSpeedSlope_SlopeError_PlusSigma  = (-(fitSpeedSlope_SlopeError[0] + sigmaSpeedSlope_SlopeError[0]) / (fitSpeedSlope_SlopeError[1] + sigmaSpeedSlope_SlopeError[1])) $ 
                                       + (1/(fitSpeedSlope_SlopeError[1] + sigmaSpeedSlope_SlopeError[1])) * xRangeSpeedSlope
 yLineSpeedSlope_SlopeError_MinusSigma = (-(fitSpeedSlope_SlopeError[0] - sigmaSpeedSlope_SlopeError[0]) / (fitSpeedSlope_SlopeError[1] - sigmaSpeedSlope_SlopeError[1])) $
-                                     + (1/(fitSpeedSlope_SlopeError[1] - sigmaSpeedSlope_SlopeError[1])) * xRangeSpeedSlope
+                                      + (1/(fitSpeedSlope_SlopeError[1] - sigmaSpeedSlope_SlopeError[1])) * xRangeSpeedSlope
 yLineSpeedSlope_Mean = meanSpeedSlope[0] + meanSpeedSlope[1] * xRangeSpeedSlope
 yLineSpeedSlope_Mean_Forced0Intercept = 0.0 + meanSpeedSlope[1] * xRangeSpeedSlope
 
@@ -186,16 +232,32 @@ yLineMassDepth_Mean = meanDepthMass[0] + meanDepthMass[1] * xRangeMassDepth
 yLineMassDepth_Mean_Forced0Incercept = 0.0 + meanDepthMass[1] * xRangeMassDepth
 
 ; Convert lines to x, y corners for polygon box - SpeedSlope
-polygonXSpeedSlope = [closest(0, yLineSpeedSlope_SpeedError_PlusSigma), closest(5, yLineSpeedSlope_SlopeError_MinusSigma), 5., closest(5, yLineSpeedSlope_SpeedError_MinusSigma), closest(0, yLineSpeedSlope_SlopeError_PlusSigma), 0]
-polygonYSpeedSlope = [yLineSpeedSlope_SpeedError_PlusSigma[polygonXSpeedSlope[0]], yLineSpeedSlope_SlopeError_MinusSigma[polygonXSpeedSlope[1]], 2500., $
-                      yLineSpeedSlope_SpeedError_MinusSigma[polygonXSpeedSlope[3]], yLineSpeedSlope_SlopeError_PlusSigma[polygonXSpeedSlope[4]], 0]
+polygonXSpeedSlope = [xRangeSpeedSlope[closest(0, yLineSpeedSlope_SpeedError_PlusSigma)], $
+                      xRangeSpeedSlope[closest(2500., yLineSpeedSlope_SlopeError_MinusSigma)], $
+                      5., $
+                      xRangeSpeedSlope[closest(2500., yLineSpeedSlope_SpeedError_MinusSigma)], $
+                      xRangeSpeedSlope[closest(0, yLineSpeedSlope_SlopeError_PlusSigma)], $
+                      0]
+polygonYSpeedSlope = [yLineSpeedSlope_SpeedError_PlusSigma[closest(0, yLineSpeedSlope_SpeedError_PlusSigma)], $
+                      yLineSpeedSlope_SlopeError_MinusSigma[closest(2500., yLineSpeedSlope_SlopeError_MinusSigma)], $
+                      2500., $
+                      yLineSpeedSlope_SpeedError_MinusSigma[closest(2500., yLineSpeedSlope_SpeedError_MinusSigma)], $
+                      yLineSpeedSlope_SlopeError_PlusSigma[closest(0, yLineSpeedSlope_SlopeError_PlusSigma)], $
+                      0]
 
 ; Convert lines to x, y corners for polygon box - MassDepth
-polygonCornersXMassDepth = [xRangeMassDepth[where(yLineMassDepth_MassError_PlusSigma EQ min(yLineMassDepth_MassError_PlusSigma))], $
-                            xRangeMassDepth[where(yLineMassDepth_DepthError_MinusSigma EQ max(yLineMassDepth_DepthError_MinusSigma))], $
-                            xRangeMassDepth[where(yLineMassDepth_MassError_MinusSigma EQ max(yLineMassDepth_MassError_MinusSigma))], $
-                            xrangeMassDepth[where(yLineMassDepth_DepthError_PlusSigma EQ min(yLineMassDepth_DepthError_PlusSigma))]]
-polygonCornersYMassDepth = [min(yLineMassDepth_MassError_PlusSigma), max(yLineMassDepth_DepthError_MinusSigma), max(yLineMassDepth_MassError_MinusSigma), min(yLineMassDepth_DepthError_PlusSigma)]
+polygonCornersXMassDepth = [xRangeMassDepth[closest(0, yLineMassDepth_MassError_PlusSigma)], $
+                            xRangeMassDepth[closest(1E16, yLineMassDepth_DepthError_MinusSigma)], $
+                            6., $
+                            xRangeMassDepth[closest(1E16, yLineMassDepth_MassError_MinusSigma)], $
+                            xrangeMassDepth[closest(0, yLineMassDepth_DepthError_PlusSigma)], $
+                            0]
+polygonCornersYMassDepth = [yLineMassDepth_MassError_PlusSigma[closest(0, yLineMassDepth_MassError_PlusSigma)], $
+                            yLineMassDepth_DepthError_MinusSigma[closest(1E16, yLineMassDepth_DepthError_MinusSigma)], $
+                            1E16, $
+                            yLineMassDepth_MassError_MinusSigma[closest(1E16, yLineMassDepth_MassError_MinusSigma)], $
+                            yLineMassDepth_DepthError_PlusSigma[closest(0, yLineMassDepth_DepthError_PlusSigma)], $
+                            0]
 ;polygonXMassDepth = [JPMrange(polygonCornersXMassDepth[0], polygonCornersXMassDepth[1], npts = 2500), JPMrange(polygonCornersXMassDepth[2], polygonCornersXMassDepth[3], npts = 2500)]
 ;polygonYMassDepth = [JPMrange(polygonCornersYMassDepth[0], polygonCornersYMassDepth[1], npts = 2500), JPMrange(polygonCornersYMassDepth[2], polygonCornersYMassDepth[3], npts = 2500)]
 
@@ -207,15 +269,19 @@ p1a = errorplot(slopesAllEvents[cmeParametersFrom3DIndices], speedsAllEvents[cme
                 LINESTYLE = 'none', SYMBOL = 'circle', /SYM_FILLED, SYM_COLOR = 'red', SYM_SIZE = 1, /OVERPLOT)
 p1b = errorplot(slopesAllEvents[cmeParametersFrom2014Paper], speedsAllEvents[cmeParametersFrom2014Paper], slopeErrorsAllEvents[cmeParametersFrom2014Paper], speedErrorsAllEvents[cmeParametersFrom2014Paper], $
                 LINESTYLE = 'none', SYMBOL = 'circle', /SYM_FILLED, SYM_COLOR = 'blue', SYM_SIZE = 1, /OVERPLOT)
-;p1c = polygon(polygonXSpeedSlope, polygonYSpeedSlope, /DATA, /FILL_BACKGROUND, FILL_COLOR = 'grey', FILL_TRANSPARENCY = 80, TARGET = [p1])
-p1d = plot(JPMrange(0, 5., npts = 2500), yLineSpeedSlope_Mean,  '--', /OVERPLOT, YRANGE = p1.yrange)ç
+p1c = polygon(polygonXSpeedSlope, polygonYSpeedSlope, /DATA, /FILL_BACKGROUND, FILL_COLOR = 'grey', FILL_TRANSPARENCY = 80, TARGET = [p1])
+p1d = plot(xRangeSpeedSlope, yLineSpeedSlope_Mean,  '--', /OVERPLOT, YRANGE = p1.yrange)
+IF ~keyword_set(FIT_3D_ONLY) THEN p1d3d = plot(xRangeSpeedSlope, yLineSpeedSlope_Mean3D, 'r--', /OVERPLOT, YRANGE = p1.yrange)
 ;p1e = plot(xRangeSpeedSlope, yLineSpeedSlope_Mean_Forced0Intercept, 'g--', /OVERPLOT)
-p1fp = plot(xRangeSpeedSlope, yLineSpeedSlope_SpeedError_PlusSigma, 'r', /OVERPLOT)
-p1fm = plot(xRangeSpeedSlope, yLineSpeedSlope_SpeedError_MinusSigma, 'r--', /OVERPLOT)
-p1gp = plot(xRangeSpeedSlope, yLineSpeedSlope_SlopeError_PlusSigma, 'b', /OVERPLOT)
-p1gm = plot(xRangeSpeedSlope, yLineSpeedSlope_SlopeError_MinusSigma, 'b--', /OVERPLOT)
-;t1 = text(0.63, 0.17, 'y = 3.3*$10^{-3}$x + 0.03')
-t1 = text(0.58, 0.17, 'y = ' + strtrim(meanSpeedSlope[1], 2) + 'x + ' + strtrim(meanSpeedSlope[0], 2))
+;p1fp = plot(xRangeSpeedSlope, yLineSpeedSlope_SpeedError_PlusSigma, 'r', /OVERPLOT)
+;p1fm = plot(xRangeSpeedSlope, yLineSpeedSlope_SpeedError_MinusSigma, 'r--', /OVERPLOT)
+;p1gp = plot(xRangeSpeedSlope, yLineSpeedSlope_SlopeError_PlusSigma, 'b', /OVERPLOT)
+;p1gm = plot(xRangeSpeedSlope, yLineSpeedSlope_SlopeError_MinusSigma, 'b--', /OVERPLOT)
+t1 = text(0.60, 0.20, 'y = 4.74*$10^{2}$x - 1.31*$10^{2}$')
+;t1   = text(0.58, 0.20, 'y = ' + strtrim(meanSpeedSlope[1], 2) + 'x + ' + strtrim(meanSpeedSlope[0], 2))
+IF ~keyword_set(FIT_3D_ONLY) THEN t13d = text(0.60, 0.17, 'y = 4.12*$10^{2}$x - 4.18*$10^{-1}$', COLOR = 'red')
+;IF ~keyword_set(FIT_3D_ONLY) THEN t13d = text(0.58, 0.17, 'y = ' + strtrim(meanSpeedSlope3d[1], 2) + 'x + ' + strtrim(meanSpeedSlope3d[0], 2), COLOR = 'red')
+
 
 ; Depth vs Mass plot
 p2 = errorplot(depths, masses, depthErrors, massErrors, LINESTYLE = 'none', SYMBOL = 'none', /SYM_FILLED, SYM_COLOR = 'red', SYM_SIZE = 1, TITLE = 'CME Masses vs Dimming Depths', $
@@ -225,21 +291,37 @@ p2a = errorplot(depthsAllEvents[cmeParametersFrom3DIndices], massesAllEvents[cme
                 LINESTYLE = 'none', SYMBOL = 'circle', /SYM_FILLED, SYM_COLOR = 'red', SYM_SIZE = 1, /OVERPLOT)
 p2b = errorplot(depthsAllEvents[cmeParametersFrom2014Paper], massesAllEvents[cmeParametersFrom2014Paper], depthErrorsAllEvents[cmeParametersFrom2014Paper], massErrorsAllEvents[cmeParametersFrom2014Paper], $
                 LINESTYLE = 'none', SYMBOL = 'circle', /SYM_FILLED, SYM_COLOR = 'blue', SYM_SIZE = 1, /OVERPLOT)
-;p2c = polygon(polygonCornersXMassDepth, polygonCornersYMassDepth, /DATA, /FILL_BACKGROUND, FILL_COLOR = 'grey', FILL_TRANSPARENCY = 80, TARGET = [p2])
+p2c = polygon(polygonCornersXMassDepth, polygonCornersYMassDepth, /DATA, /FILL_BACKGROUND, FILL_COLOR = 'grey', FILL_TRANSPARENCY = 80, TARGET = [p2])
 p2d = plot(xRangeMassDepth, yLineMassDepth_Mean, '--', /OVERPLOT)
+IF ~keyword_set(FIT_3D_ONLY) THEN p2d3d = plot(xRangeMassDepth, yLineMassDepth_Mean3D, 'r--', /OVERPLOT)
+IF keyword_set(FIT_LOW_MASS_ONLY) THEN p2.yrange = [1E13, 1E15]
 ;p2e = plot(xRangeMassDepth, yLineMassDepth_Mean_Forced0Incercept, 'g--', /OVERPLOT)
-p2fp = plot(xRangeMassDepth, yLineMassDepth_MassError_PlusSigma, 'r', /OVERPLOT)
-p2fm = plot(xRangeMassDepth, yLineMassDepth_MassError_MinusSigma, 'r--', /OVERPLOT)
-p2gp = plot(xRangeMassDepth, yLineMassDepth_DepthError_PlusSigma, 'b', /OVERPLOT)
-p2gm = plot(xRangeMassDepth, yLineMassDepth_DepthError_MinusSigma, 'b--', /OVERPLOT)
-;t2 = text(0.63, 0.17, 'y = 1.72*$10^{-15}$x + ' + JPMPrintNumber(meanDepthMass[0]))
-t2 = text(0.58, 0.17, 'y = ' + strtrim(meanDepthMass[1], 2) + 'x + ' + strtrim(meanDepthMass[0], 2))
-STOP
-; Label the CME span angle next to each point
-FOR i = 0, n_elements(cmeSpan) - 1 DO BEGIN
-  IF cmeSpan[i] NE 0 THEN t3 = text(slopesAllEvents[i], speedsAllEvents[i] + 100, /DATA, JPMPrintNumber(cmeSpan[i], /NO_DECIMALS), TARGET = [p1])
-  IF cmeSpan[i] NE 0 THEN t4 = text(depthsAllEvents[i], massesAllEvents[i] + 2E14, /DATA, JPMPrintNumber(cmeSpan[i], /NO_DECIMALS), TARGET = [p2])
-ENDFOR
+;p2fp = plot(xRangeMassDepth, yLineMassDepth_MassError_PlusSigma, 'r', /OVERPLOT)
+;p2fm = plot(xRangeMassDepth, yLineMassDepth_MassError_MinusSigma, 'r--', /OVERPLOT)
+;p2gp = plot(xRangeMassDepth, yLineMassDepth_DepthError_PlusSigma, 'b', /OVERPLOT)
+;p2gm = plot(xRangeMassDepth, yLineMassDepth_DepthError_MinusSigma, 'b--', /OVERPLOT)
+t2 = text(0.60, 0.21, 'y = 1.45*$10^{15}$x  -  1.81*$10^{15}$')
+;t2   = text(0.58, 0.20, 'y = ' + strtrim(meanDepthMass[1], 2) + 'x + ' + strtrim(meanDepthMass[0], 2))
+IF ~keyword_set(FIT_3D_ONLY) THEN t23d = text(0.60, 0.18, 'y = 1.75*$10^{15}$x + 1.87*$10^{14}$', COLOR = 'red')
+;IF ~keyword_set(FIT_3D_ONLY) THEN t23d = text(0.58, 0.17, 'y = ' + strtrim(meanDepthMass3d[1], 2) + 'x + ' + strtrim(meanDepthMass3d[0], 2), COLOR = 'red')
+
+; Label extra information next to each point
+;FOR i = 0, n_elements(eventNumber) - 1 DO BEGIN
+;  IF eventNumber[i] NE 0 THEN t3 = text(slopesAllEvents[i], speedsAllEvents[i], /DATA, JPMPrintNumber(eventNumber[i], /NO_DECIMALS), TARGET = [p1])
+;  IF eventNumber[i] NE 0 THEN t4 = text(depthsAllEvents[i], massesAllEvents[i], /DATA, JPMPrintNumber(eventNumber[i], /NO_DECIMALS), TARGET = [p2])
+;ENDFOR
+;FOR i = 0, n_elements(cmeSpan) - 1 DO BEGIN
+;  IF cmeSpan[i] NE 0 THEN t3 = text(slopesAllEvents[i], speedsAllEvents[i] + 100, /DATA, JPMPrintNumber(cmeSpan[i], /NO_DECIMALS), TARGET = [p1])
+;  IF cmeSpan[i] NE 0 THEN t4 = text(depthsAllEvents[i], massesAllEvents[i] + 2E14, /DATA, JPMPrintNumber(cmeSpan[i], /NO_DECIMALS), TARGET = [p2])
+;ENDFOR
+;FOR i = 0, n_elements(flareType) - 1 DO BEGIN
+;  IF flareType[i] NE 0 THEN t3 = text(slopesAllEvents[i], speedsAllEvents[i] + 100, /DATA, strtrim(flareType[i], 2), TARGET = [p1])
+;  IF flareType[i] NE 0 THEN t4 = text(depthsAllEvents[i], massesAllEvents[i] + 2E14, /DATA, strtrim(flareType[i], 2), TARGET = [p2])
+;ENDFOR
+;FOR i = 0, n_elements(flareClass) - 1 DO BEGIN
+;  IF flareClass[i] NE '' THEN t3 = text(slopesAllEvents[i], speedsAllEvents[i] + 100, /DATA, strtrim(flareClass[i], 2), TARGET = [p1])
+;  IF flareClass[i] NE '' THEN t4 = text(depthsAllEvents[i], massesAllEvents[i] + 2E14, /DATA, strtrim(flareClass[i], 2), TARGET = [p2])
+;ENDFOR
 STOP
 p1.save, saveloc1 + 'Slope Vs Speed.png'
 p1.save, saveloc2 + 'PNGs/SlopeVsSpeed.png'
@@ -247,6 +329,17 @@ p1.save, saveloc2 + 'EPSs/SlopeVsSpeed.eps'
 p2.save, saveloc1 + 'Depth Vs Mass.png'
 p2.save, saveloc2 + 'PNGs/DepthVsMass.png'
 p2.save, saveloc2 + 'EPSs/DepthVsMass.eps'
+IF keyword_set(FIT_3D_ONLY) THEN BEGIN
+  polygonXSpeedSlope3D = polygonXSpeedSlope
+  polygonYSpeedSlope3D = polygonYSpeedSlope
+  yLineSpeedSlope_Mean3D = yLineSpeedSlope_Mean
+  polygonCornersXMassDepth3D = polygonCornersXMassDepth
+  polygonCornersYMassDepth3D = polygonCornersYMassDepth
+  yLineMassDepth_Mean3D = yLineMassDepth_Mean
+  meanSpeedSlope3D = meanSpeedSlope
+  meanDepthMass3D = meanDepthMass
+  save, polygonXSpeedSlope3D, polygonYSpeedSlope3D, yLineSpeedSlope_Mean3D, polygonCornersXMassDepth3D, polygonCornersYMassDepth3D, yLineMassDepth_Mean3D, meanSpeedSlope3D, meanDepthMass3D, FILENAME = saveloc1 + 'Correlation Fits 3D CMEs Only.sav', /COMPRESS
+ENDIF
 save, FILENAME = saveloc2 + 'IDLSavesets/Figure4Saveset.sav', /COMPRESS
 
 END
