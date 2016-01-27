@@ -106,7 +106,7 @@ if size(lastyear,/type) eq 0 then lastyear = year
 if size(goes,/type) eq 0 or lastyear ne year then begin
   gdir = getenv('see_analysis')
   if (strlen(gdir) gt 0) then gdir = gdir + '/goes/' $
-  else gdir = '/titus/timed/analysis/goes/'		; force to TITUS directory
+  else gdir = '/Users/jama6159/IDLWorkspace85/Woods IDL Library/goes/'
   sfile = 'goes_1mdata_widx_'+strtrim(year,2)+'.sav'
   print, 'GETGOES1M():  restoring ', sfile
   restore, gdir + sfile

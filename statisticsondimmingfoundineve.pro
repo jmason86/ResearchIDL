@@ -40,8 +40,9 @@ numberOfEvents = n_elements(coronalDimmingOutput)
 
 ; EVE line information
 eveLineCenters = ['94', '131', '133', '171', '177', '180', '195', '202', '211', '256', $
-                  '284', '304', '335', '361', '368', '465', '499', '526', '554', '584', $
-                  '600', '625', '630', '719', '770', '790', '973', '977', '1026', '1032']
+                  '284', '304', '335', '361', '368', '446', '465', '499', '521', '526', $ 
+                  '537', '554', '568', '584', '592', '596', '601', '625', '630', '719', $
+                  '722', '770', '790', '836', '950', '973', '977', '1026', '1032']
 eveLineCentersOfInterest = ['171', '177', '180', '195', '202', '211']
 eveLineCentersOfInterestIndices = [3, 4, 5, 6, 7, 8]                
 
@@ -58,8 +59,8 @@ FOR lineIndex = 0, 5 DO BEGIN
     dimmingIdentifiedIndices = where(percentDepths GE percentDepthThresholds[thresholdIndex], count)
     
     ; Create histogram data of identified dimming versus flare class
-    binEdges = [range(1E-5, 9E-5, inc = 1E-5), range(1E-4, 1E-3, inc = 1E-4)] ; M1 to X10
-    binCenters = [range(1.5E-5, 9.5E-5, inc = 1E-5), range(1.5E-4, 9.5E-4, inc = 1E-4)]
+    binEdges = [JPMrange(1E-5, 9E-5, inc = 1E-5), JPMrange(1E-4, 1E-3, inc = 1E-4)] ; M1 to X10
+    binCenters = [JPMrange(1.5E-5, 9.5E-5, inc = 1E-5), JPMrange(1.5E-4, 9.5E-4, inc = 1E-4)]
     histogramOfFlareClass = hastogram(goesFlux[dimmingIdentifiedIndices], binEdges)
     
     ; Output to structure
@@ -83,21 +84,21 @@ FOR i = 0, n_elements(numberOfDimmingStructure) - 1 DO $
 threshold1PercentIndices = where(numberOfDimmingsStructure.PercentDepthThreshold EQ 1, count)
 histogramFor1Percent = numberOfDimmingsStructure[threshold1PercentIndices].HistogramOfFlareClass
 b1 = barplot(numberOfDimmingsStructure[threshold1PercentIndices[0]].HistogramLocations, total(histogramFor1Percent, 2), FILL_COLOR = 'red', $
-             TITLE = 'Total of IDed Dimmings > 1% for 263 ≥M1 Events in 6 EVE Lines', $
+             TITLE = 'Total of IDed Dimmings > 1% for 302 ≥M1 Events in 6 EVE Lines', $
              XRANGE = [1E-5, 1E-3], XTICKNAME = ['M', 'X', ''], /XLOG)
 
 ; All at 2% threshold totaled 
 threshold2PercentIndices = where(numberOfDimmingsStructure.PercentDepthThreshold EQ 2, count)
 histogramFor2Percent = numberOfDimmingsStructure[threshold2PercentIndices].HistogramOfFlareClass
 b1 = barplot(numberOfDimmingsStructure[threshold2PercentIndices[0]].HistogramLocations, total(histogramFor2Percent, 2), FILL_COLOR = 'green', $
-             TITLE = 'Total of IDed Dimmings > 2% for 263 ≥M1 Events in 6 EVE Lines', $
+             TITLE = 'Total of IDed Dimmings > 2% for 302 ≥M1 Events in 6 EVE Lines', $
              XRANGE = [1E-5, 1E-3], XTICKNAME = ['M', 'X', ''], /XLOG)
 
 ; All at 3% threshold totaled
 threshold3PercentIndices = where(numberOfDimmingsStructure.PercentDepthThreshold EQ 3, count)
 histogramFor3Percent = numberOfDimmingsStructure[threshold3PercentIndices].HistogramOfFlareClass
 b1 = barplot(numberOfDimmingsStructure[threshold3PercentIndices[0]].HistogramLocations, total(histogramFor3Percent, 2), FILL_COLOR = 'blue', $
-             TITLE = 'Total of IDed Dimmings > 3% for 263 ≥M1 Events in 6 EVE Lines', $
+             TITLE = 'Total of IDed Dimmings > 3% for 302 ≥M1 Events in 6 EVE Lines', $
              XRANGE = [1E-5, 1E-3], XTICKNAME = ['M', 'X', ''], /XLOG)
 
 ; All at 2% threshold lines separated

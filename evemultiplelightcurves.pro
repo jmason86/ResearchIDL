@@ -34,6 +34,7 @@
 ; EXAMPLE:
 ;   EVEMultipleLightCurves, 2010219, 2010219, /PERCENT, REFERENCE_SECOND = 61200
 ;   EVEMultipleLightCurves, 2011158, 2011158, /PERCENT, REFERENCE_SECOND = 18000
+;   EVEMultipleLightCurves, 2011216, 2011216, /PERCENT, REFERENCE_SECOND = 10800, /PUBLICATION, /STACKED_PLOT
 ; 
 ; MODIFICATION HISTORY:
 ;   Written by:
@@ -46,8 +47,9 @@ PRO EVEMultipleLightCurves, startYYYYDOY, endYYYYDOY, PERCENT = PERCENT, REFEREN
 IF ~keyword_set(STACKED_PLOT) AND ~keyword_set(OVERPLOT) THEN STACKED_PLOT = 1
 IF keyword_set(PERCENT) AND ~keyword_set(REFERENCE_SECOND) THEN REFERENCE_SECOND = 0
 IF ~keyword_set(PERCENT) THEN xRangeStart = 0 ELSE xRangeStart = REFERENCE_SECOND
-saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/2010219_07AUG_1824_M1.0/'
+;saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/2010219_07AUG_1824_M1.0/'
 ;saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/2011083_24MAR_1207_M1.0/'
+saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/2011216_04AUG_0357_M9.3/'
 
 IF keyword_set(PERCENT) THEN BEGIN
   GetEVEInPercentChange, startYYYYDOY, endYYYYDOY, REFERENCE_TIME = REFERENCE_SECOND, eveLines, sod
@@ -116,7 +118,8 @@ IF keyword_set(PERCENT) THEN BEGIN
 ENDIF
 
 ; GOES events
-rd_gev, '07-jun-11', '08-jun-11', goesEvents ; TODO: change hardcoded date to variable
+IF endYYYYDOY EQ startYYYYDOY THEN endYYYYDOYgoes = endYYYYDOY + 1 ELSE endYYYYDOYgoes = endYYYYDOY
+rd_gev, JPMyyydoy2dd_mon_yy(startYYYYDOY), JPMyyydoy2dd_mon_yy(endYYYYDOYgoes), goesEvents
 selectFlares = goesEvents[where(string(goesEvents.ST$CLASS) GE 'M', numFlares)]
 goesEventStartTime = selectFlares.TIME / 1000. ; [Seconds of day]   
 goesEventPeakTime = goesEventStartTime + selectFlares.PEAK ; [Seconds of day]

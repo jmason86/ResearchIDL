@@ -36,10 +36,10 @@ PRO FindDimmingInEVE
 TIC
 
 ; Setup
-eveDataLoc = '/Users/jama6159/Documents/Research/Data/SDO/EVE/EVE Merged/'
+eveDataLoc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Data/EVE/'
 saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Automatic Dimming Database/'
 producePlot = 1
-useSaveFile = 1
+useSaveFile = 0
 
 IF useSaveFile NE 1 THEN BEGIN
 
@@ -57,16 +57,23 @@ IF useSaveFile NE 1 THEN BEGIN
   goesEventStartTimes = anytim(selectFlares, /MJD)
   
   ; Load EVE lines from EVE day 1 (2010/120 April 30) to present, merged, and averaged to 1 minute
-  RESTORE, eveDataLoc + 'JPMMerge.sav'
+  restore, eveDataLoc + 'eve_lines_2010121-2014120 MEGS-A Mission.sav'
   eveDOYAndTime = datalines.YYYYDOY  + datalines.SOD / 86400.d0
+  
+  ; Get rid of bad EVE data
+  FOR wavelengthIndex = 0, n_elements(datalines[0].line_irradiance) - 1 DO BEGIN
+    badIndices = where(datalines.line_irradiance[wavelengthIndex] EQ -1)
+    datalines[badIndices].line_irradiance[wavelengthIndex] = !VALUES.F_NAN
+  ENDFOR
   
   ; Create array of EVE line centers in Å
   eveLineCenters = ['94', '131', '133', '171', '177', '180', '195', '202', '211', '256', $
-                    '284', '304', '335', '361', '368', '465', '499', '526', '554', '584', $
-                    '600', '625', '630', '719', '770', '790', '973', '977', '1026', '1032']
-  
+                    '284', '304', '335', '361', '368', '446', '465', '499', '521', '526', $ 
+                    '537', '554', '568', '584', '592', '596', '601', '625', '630', '719', $
+                    '722', '770', '790', '836', '950', '973', '977', '1026', '1032']
+                      
   ; Create the output structure
-  coronalDimmingStructure = { GoesClass: '', GoesFlux: 0d, EveLineCenters: eveLineCenters, EventStartTime: dblarr(30), StartIrradiance: dblarr(30), EventPeakTime: dblarr(30), PeakIrradiance: dblarr(30), EventMinimumTime: dblarr(30), MinimumIrradiance: dblarr(30), EventDurationInSeconds: fltarr(30), Slope: dblarr(30), SlopeUnit: 'W/m^2/s', PercentDepth: dblarr(30), PercentDepthUnit: 'W/m^2'}
+  coronalDimmingStructure = { GoesClass: '', GoesFlux: 0d, EveLineCenters: eveLineCenters, EventStartTime: dblarr(39), StartIrradiance: dblarr(39), EventPeakTime: dblarr(39), PeakIrradiance: dblarr(39), EventMinimumTime: dblarr(39), MinimumIrradiance: dblarr(39), EventDurationInSeconds: fltarr(39), Slope: dblarr(39), SlopeUnit: 'W/m^2/s', PercentDepth: dblarr(39), PercentDepthUnit: 'W/m^2'}
  
   ; Begin loop through all GOES events 
   FOR goesEventIndex = 0, numFlares - 1 DO BEGIN
@@ -85,12 +92,12 @@ IF useSaveFile NE 1 THEN BEGIN
     ; Skip if no EVE data in range found
     IF numEveInRange EQ 0 THEN BEGIN
       message, /INFO, 'No EVE data found between ' + strtrim(eventBeginBracket, 2) + 'and ' + strtrim(eventEndBracket, 2)
-      message, /INFO, strtrim(float(goesEventIndex) / numFlares * 100., 2) + '% complete'
+      message, /INFO, 'Dimming search: ' + strtrim(float(goesEventIndex) / numFlares * 100., 2) + '% complete'
       CONTINUE
     ENDIF
     
     ; Get and store the peak time and irradiance value in EVE within the bracketed time range
-    peakIrradiance = dblarr(30) & timeOfPeakIrradiance = dblarr(30)
+    peakIrradiance = dblarr(39) & timeOfPeakIrradiance = dblarr(39)
     FOR i = 0, 29 DO BEGIN
       peakIrradiance[i] = max(eveIrradianceInRange[i, *], indexOfPeak)
       timeOfPeakIrradiance[i] = eveDOYAndTime[eveinRangeIndices[indexOfPeak]]
@@ -100,7 +107,7 @@ IF useSaveFile NE 1 THEN BEGIN
     eveIrradianceInRangeSmoothed = smooth(eveIrradianceInRange, [1, 5])
     
     ; Get and store the minimum time and irradiance value in EVE within the EVE peak time and GOES end time
-    minIrradiance = dblarr(30) & timeOfMinIrradiance = dblarr(30)
+    minIrradiance = dblarr(39) & timeOfMinIrradiance = dblarr(39)
     FOR i = 0, 29 DO BEGIN
       ; Only look at times between peak time (rather than start time) and end time
       eveInMinRangeIndices = where(eveDOYAndTime GE timeOfPeakIrradiance[i] AND eveDOYAndTime LE eventEndBracket)
@@ -109,19 +116,19 @@ IF useSaveFile NE 1 THEN BEGIN
     ENDFOR
     
     ; Compute and store the time between the GOES start time and the EVE minimum time
-    durationInSeconds = dblarr(30)
+    durationInSeconds = dblarr(39)
     FOR i = 0, 29 DO BEGIN
       durationInFractionalDays = timeOfMinIrradiance[i] - eventBeginBracket
       durationInSeconds[i] = durationInFractionalDays * 24.d0 * 3600.d0
       IF durationinseconds[i] GT (rightBracketHours * 3600) THEN BEGIN
         message, /INFO, 'Duration computed exceeds threshold. Skipping.'
-        message, /INFO, strtrim(float(goesEventIndex) / numFlares * 100., 2) + '% complete'
+        message, /INFO, 'Dimming search search: ' + strtrim(float(goesEventIndex) / numFlares * 100., 2) + '% complete'
         CONTINUE
       ENDIF
     ENDFOR
       
     ; Compute and store the slope between the EVE irradiance at the GOES start time and the EVE irradiance at the minimum time
-    slope = dblarr(30)
+    slope = dblarr(39)
     FOR i = 0, 29 DO BEGIN
       rise = eveIrradianceInRange[i, 0] - minIrradiance[i] ; TODO: Change index 0 to whatever the GOES start time is, since if leftBracketHours ≠ 0 then index 0 will be incorrect
       run = durationInSeconds(i)
@@ -130,7 +137,7 @@ IF useSaveFile NE 1 THEN BEGIN
     ENDFOR 
     
     ; Compute and store the depth between the EVE irradiance at the GOES start time and the EVE irrdiance at the minimum time
-    depth = dblarr(30)
+    depth = dblarr(39)
     FOR i = 0, 29 DO BEGIN
       depth[i] = (eveIrradianceInRange[i, 0] - minIrradiance[i]) / eveIrradianceInRange[i, 0] * 100. 
     ENDFOR 
@@ -158,7 +165,7 @@ IF useSaveFile NE 1 THEN BEGIN
     coronalDimmingStructure.PercentDepth = depth
     coronalDimmingOutput = (n_elements(coronalDimmingOutput) eq 0) ? coronalDimmingStructure : [coronalDimmingOutput, coronalDimmingStructure]
     
-    message, /INFO, strtrim(float(goesEventIndex) / numFlares * 100., 2) + '% complete'
+    message, /INFO, 'Dimming search: ' + strtrim(float(goesEventIndex) / numFlares * 100., 2) + '% complete'
     
   ENDFOR ; goesEventIndex loop
   
@@ -177,96 +184,136 @@ IF producePlot EQ 1 THEN BEGIN
   ENDFOR
   
   ; Produce plot
-  FOR i = 0, 29 DO BEGIN
+  numLines = n_elements(datalines[0].line_irradiance)
+  FOR i = 0, numLines - 1 DO BEGIN
     ; Compute correlation coefficients
+    
     finiteSlope = where(finite(coronalDimmingOutput.Slope[i]) EQ 1, finiteSlopeCount)
+    IF finiteSlopeCount GT 1 THEN BEGIN
+      spearmanCoefficientSlope = r_correlate(coronalDimmingOutput[finiteSlope].GoesFlux, coronalDimmingOutput[finiteSlope].Slope[i])
+      pearsonCoefficientSlope = correlate(coronalDimmingOutput[finiteSlope].GoesFlux, coronalDimmingOutput[finiteSlope].Slope[i])
+    ENDIF
+    
     finiteSlope1PercentDepthThreshold = where(finite(coronalDimmingOutput.Slope[i]) EQ 1 AND coronalDimmingOutput.PercentDepth[i] GE 1, finiteSlope1PercentDepthThresholdCount)
+    IF finiteSlope1PercentDepthThresholdCount GT 1 THEN BEGIN
+      spearmanCoefficientSlope1PercentDepthThreshold = r_correlate(coronalDimmingOutput[finiteSlope1PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteSlope1PercentDepthThreshold].Slope[i])
+      pearsonCoefficientSlope1PercentDepthThreshold = correlate(coronalDimmingOutput[finiteSlope1PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteSlope1PercentDepthThreshold].Slope[i])
+    ENDIF
+    
     finiteSlope2PercentDepthThreshold = where(finite(coronalDimmingOutput.Slope[i]) EQ 1 AND coronalDimmingOutput.PercentDepth[i] GE 2, finiteSlope2PercentDepthThresholdCount)
+    IF finiteSlope2PercentDepthThresholdCount GT 1 THEN BEGIN
+      spearmanCoefficientSlope2PercentDepthThreshold = r_correlate(coronalDimmingOutput[finiteSlope2PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteSlope2PercentDepthThreshold].Slope[i])
+      pearsonCoefficientSlope2PercentDepthThreshold = correlate(coronalDimmingOutput[finiteSlope2PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteSlope2PercentDepthThreshold].Slope[i])
+    ENDIF
+    
     finiteDuration = where(finite(coronalDimmingOutput.EventDurationInSeconds[i]) EQ 1, finiteDurationCount)
+    IF finiteDurationCount GT 1 THEN BEGIN
+      spearmanCoefficientDuration = r_correlate(coronalDimmingOutput[finiteDuration].GoesFlux, coronalDimmingOutput[finiteDuration].EventDurationInSeconds[i])
+      pearsonCoefficientDuration = correlate(coronalDimmingOutput[finiteDuration].GoesFlux, coronalDimmingOutput[finiteDuration].EventDurationInSeconds[i])
+    ENDIF
+    
     finiteDuration1PercentDepthThreshold = where(finite(coronalDimmingOutput.EventDurationInSeconds[i]) EQ 1 AND coronalDimmingOutput.PercentDepth[i] GE 1, finiteDuration1PercentDepthThresholdCount)
+    IF finiteDuration1PercentDepthThresholdCount GT 1 THEN BEGIN
+      spearmanCoefficientDuration1PercentDepthThreshold = r_correlate(coronalDimmingOutput[finiteDuration1PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteDuration1PercentDepthThreshold].EventDurationInSeconds[i])
+      pearsonCoefficientDuration1PercentDepthThreshold = correlate(coronalDimmingOutput[finiteDuration1PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteDuration1PercentDepthThreshold].EventDurationInSeconds[i])
+    ENDIF
+    
     finiteDuration2PercentDepthThreshold = where(finite(coronalDimmingOutput.EventDurationInSeconds[i]) EQ 1 AND coronalDimmingOutput.PercentDepth[i] GE 2, finiteDuration2PercentDepthThresholdCount)
+    IF finiteDuration2PercentDepthThresholdCount GT 1 THEN BEGIN
+      spearmanCoefficientDuration2PercentDepthThreshold = r_correlate(coronalDimmingOutput[finiteDuration2PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteDuration2PercentDepthThreshold].EventDurationInSeconds[i])
+      pearsonCoefficientDuration2PercentDepthThreshold = correlate(coronalDimmingOutput[finiteDuration2PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteDuration2PercentDepthThreshold].EventDurationInSeconds[i])
+    ENDIF
+    
     finiteDepth = where(finite(coronalDimmingOutput.PercentDepth[i]) EQ 1, finiteDepthCount)
-    spearmanCoefficientSlope = r_correlate(coronalDimmingOutput[finiteSlope].GoesFlux, coronalDimmingOutput[finiteSlope].Slope[i])
-    pearsonCoefficientSlope = correlate(coronalDimmingOutput[finiteSlope].GoesFlux, coronalDimmingOutput[finiteSlope].Slope[i])
-    spearmanCoefficientSlope1PercentDepthThreshold = r_correlate(coronalDimmingOutput[finiteSlope1PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteSlope1PercentDepthThreshold].Slope[i])
-    pearsonCoefficientSlope1PercentDepthThreshold = correlate(coronalDimmingOutput[finiteSlope1PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteSlope1PercentDepthThreshold].Slope[i])
-    spearmanCoefficientSlope2PercentDepthThreshold = r_correlate(coronalDimmingOutput[finiteSlope2PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteSlope2PercentDepthThreshold].Slope[i])
-    pearsonCoefficientSlope2PercentDepthThreshold = correlate(coronalDimmingOutput[finiteSlope2PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteSlope2PercentDepthThreshold].Slope[i])
-    spearmanCoefficientDuration = r_correlate(coronalDimmingOutput[finiteDuration].GoesFlux, coronalDimmingOutput[finiteDuration].EventDurationInSeconds[i])
-    pearsonCoefficientDuration = correlate(coronalDimmingOutput[finiteDuration].GoesFlux, coronalDimmingOutput[finiteDuration].EventDurationInSeconds[i])
-    spearmanCoefficientDuration1PercentDepthThreshold = r_correlate(coronalDimmingOutput[finiteDuration1PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteDuration1PercentDepthThreshold].EventDurationInSeconds[i])
-    pearsonCoefficientDuration1PercentDepthThreshold = correlate(coronalDimmingOutput[finiteDuration1PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteDuration1PercentDepthThreshold].EventDurationInSeconds[i])
-    spearmanCoefficientDuration2PercentDepthThreshold = r_correlate(coronalDimmingOutput[finiteDuration2PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteDuration2PercentDepthThreshold].EventDurationInSeconds[i])
-    pearsonCoefficientDuration2PercentDepthThreshold = correlate(coronalDimmingOutput[finiteDuration2PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteDuration2PercentDepthThreshold].EventDurationInSeconds[i])
-    spearmanCoefficientDepth = r_correlate(coronalDimmingOutput[finiteDepth].GoesFlux, coronalDimmingOutput[finiteDepth].PercentDepth[i])
-    pearsonCoefficientDepth = correlate(coronalDimmingOutput[finiteDepth].GoesFlux, coronalDimmingOutput[finiteDepth].PercentDepth[i])
+    IF finiteDepthCount GT 1 THEN BEGIN
+      spearmanCoefficientDepth = r_correlate(coronalDimmingOutput[finiteDepth].GoesFlux, coronalDimmingOutput[finiteDepth].PercentDepth[i])
+      pearsonCoefficientDepth = correlate(coronalDimmingOutput[finiteDepth].GoesFlux, coronalDimmingOutput[finiteDepth].PercentDepth[i])
+    ENDIF          
     
-    ; Slope vs GOES class
-    p1 = plot(coronalDimmingOutput.GoesFlux, coronalDimmingOutput.Slope[i], SYMBOL = 'square', LINESTYLE = 'none', /BUFFER, $
-              TITLE = 'Slope Versus Flare Class for ' + coronalDimmingOutput[0].EveLineCenters[i] + 'Å, ' + strtrim(finiteSlopeCount, 2) + ' events', $
-              YTITLE = 'Slope [W/m!U2!N/s]', YRANGE = [0, 9E-9], $
-              XTITLE = 'GOES Flare Class', XRANGE = [1E-5, 1E-3], XTICKNAME = ['M', 'X', ''], /XLOG)
-    t1 = text(0.7, 0.7, 'Spearman = ' + number_formatter(spearmanCoefficientSlope[0], decimals=2))
-    t2 = text(0.7, 0.65, 'Pearson = ' + number_formatter(pearsonCoefficientSlope[0], decimals=2))
-    p1.Save, saveloc + 'SlopeVsFlareClass_' + coronalDimmingOutput[0].EveLineCenters[i] + '.png'
-    p1.Close
-
-    ; Slope vs GOES class with 1% depth threshold
-    p2 = plot(coronalDimmingOutput[finiteSlope1PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteSlope1PercentDepthThreshold].Slope[i], SYMBOL = 'square', LINESTYLE = 'none', /BUFFER, $
-              TITLE = 'Slope For ≥ 1% Depth Versus Flare Class for ' + coronalDimmingOutput[0].EveLineCenters[i] + 'Å, ' + strtrim(finiteSlope1PercentDepthThresholdCount, 2) + ' events', $
-              YTITLE = 'Slope [W/m!U2!N/s]', YRANGE = [0, 9E-9], $
-              XTITLE = 'GOES Flare Class', XRANGE = [1E-5, 1E-3], XTICKNAME = ['M', 'X', ''], /XLOG)
-    t1 = text(0.7, 0.7, 'Spearman = ' + number_formatter(spearmanCoefficientSlope1PercentDepthThreshold[0], decimals=2))
-    t2 = text(0.7, 0.65, 'Pearson = ' + number_formatter(pearsonCoefficientSlope1PercentDepthThreshold[0], decimals=2))
-    p2.Save, saveloc + 'SlopeWith1PercentDepthThresholdVsFlareClass_' + coronalDimmingOutput[0].EveLineCenters[i] + '.png'
-    p2.Close
+    ; Plot correlations 
     
-    ; Slope vs GOES class with 2% depth threshold
-    p3 = plot(coronalDimmingOutput[finiteSlope2PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteSlope2PercentDepthThreshold].Slope[i], SYMBOL = 'square', LINESTYLE = 'none', /BUFFER, $
-              TITLE = 'Slope For ≥ 2% Depth Versus Flare Class for ' + coronalDimmingOutput[0].EveLineCenters[i] + 'Å, ' + strtrim(finiteSlope2PercentDepthThresholdCount, 2) + ' events', $
-              YTITLE = 'Slope [W/m!U2!N/s]', YRANGE = [0, 9E-9], $
-              XTITLE = 'GOES Flare Class', XRANGE = [1E-5, 1E-3], XTICKNAME = ['M', 'X', ''], /XLOG)
-    t1 = text(0.7, 0.7, 'Spearman = ' + number_formatter(spearmanCoefficientSlope2PercentDepthThreshold[0], decimals=2))
-    t2 = text(0.7, 0.65, 'Pearson = ' + number_formatter(pearsonCoefficientSlope2PercentDepthThreshold[0], decimals=2))
-    p3.Save, saveloc + 'SlopeWith2PercentDepthThresholdVsFlareClass_' + coronalDimmingOutput[0].EveLineCenters[i] + '.png'
-    p3.Close
+    IF finiteSlopeCount GT 1 THEN BEGIN
+      ; Slope vs GOES class
+      p1 = plot(coronalDimmingOutput.GoesFlux, coronalDimmingOutput.Slope[i], SYMBOL = 'square', LINESTYLE = 'none', /BUFFER, $
+                TITLE = 'Slope Versus Flare Class for ' + coronalDimmingOutput[0].EveLineCenters[i] + 'Å, ' + strtrim(finiteSlopeCount, 2) + ' events', $
+                YTITLE = 'Slope [W/m!U2!N/s]', YRANGE = [0, 9E-9], $
+                XTITLE = 'GOES Flare Class', XRANGE = [1E-5, 1E-3], XTICKNAME = ['M', 'X', ''], /XLOG)
+      t1 = text(0.7, 0.7, 'Spearman = ' + number_formatter(spearmanCoefficientSlope[0], decimals=2))
+      t2 = text(0.7, 0.65, 'Pearson = ' + number_formatter(pearsonCoefficientSlope[0], decimals=2))
+      p1.Save, saveloc + 'SlopeVsFlareClass_' + coronalDimmingOutput[0].EveLineCenters[i] + '.png'
+      p1.Close
+    ENDIF
     
-    ; Duration vs GOES class
-    p4 = plot(coronalDimmingOutput.GoesFlux, coronalDimmingOutput.EventDurationInSeconds[i], SYMBOL = 'square', LINESTYLE = 'none', /BUFFER, $
-              TITLE = 'Dimming Duration Versus Flare Class for ' + coronalDimmingOutput[0].EveLineCenters[i] + 'Å, ' + strtrim(finiteDurationCount, 2) + ' events', $
-              YTITLE = 'Dimming Duration [seconds]', $;, YRANGE = [-2E-9, 2E-9], $
-              XTITLE = 'GOES Flare Class', XRANGE = [1E-5, 1E-3], XTICKNAME = ['M', 'X', ''], /XLOG)
-    t1 = text(0.7, 0.7, 'Spearman = ' + number_formatter(spearmanCoefficientDuration[0], decimals=2))
-    t2 = text(0.7, 0.65, 'Pearson = ' + number_formatter(pearsonCoefficientDuration[0], decimals=2))
-    p4.Save, saveloc + 'DurationVsFlareClass_' + coronalDimmingOutput[0].EveLineCenters[i] + '.png'
+    IF finiteSlope1PercentDepthThresholdCount GT 1 THEN BEGIN
+      ; Slope vs GOES class with 1% depth threshold
+      p2 = plot(coronalDimmingOutput[finiteSlope1PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteSlope1PercentDepthThreshold].Slope[i], SYMBOL = 'square', LINESTYLE = 'none', /BUFFER, $
+                TITLE = 'Slope For ≥ 1% Depth Versus Flare Class for ' + coronalDimmingOutput[0].EveLineCenters[i] + 'Å, ' + strtrim(finiteSlope1PercentDepthThresholdCount, 2) + ' events', $
+                YTITLE = 'Slope [W/m!U2!N/s]', YRANGE = [0, 9E-9], $
+                XTITLE = 'GOES Flare Class', XRANGE = [1E-5, 1E-3], XTICKNAME = ['M', 'X', ''], /XLOG)
+      t1 = text(0.7, 0.7, 'Spearman = ' + number_formatter(spearmanCoefficientSlope1PercentDepthThreshold[0], decimals=2))
+      t2 = text(0.7, 0.65, 'Pearson = ' + number_formatter(pearsonCoefficientSlope1PercentDepthThreshold[0], decimals=2))
+      p2.Save, saveloc + 'SlopeWith1PercentDepthThresholdVsFlareClass_' + coronalDimmingOutput[0].EveLineCenters[i] + '.png'
+      p2.Close
+    ENDIF
     
-    ; Duration vs GOES class with 1% depth threshold
-    p5 = plot(coronalDimmingOutput[finiteDuration1PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteDuration1PercentDepthThreshold].EventDurationInSeconds[i], SYMBOL = 'square', LINESTYLE = 'none', /BUFFER, $
-              TITLE = 'Dimming Duration For ≥ 1% Depth Versus Flare Class for ' + coronalDimmingOutput[0].EveLineCenters[i] + 'Å, ' + strtrim(finiteDuration1PercentDepthThresholdCount, 2) + ' events', $
-              YTITLE = 'Dimming Duration [seconds]', $;, YRANGE = [-2E-9, 2E-9], $
-              XTITLE = 'GOES Flare Class', XRANGE = [1E-5, 1E-3], XTICKNAME = ['M', 'X', ''], /XLOG)
-    t1 = text(0.7, 0.7, 'Spearman = ' + number_formatter(spearmanCoefficientDuration1PercentDepthThreshold[0], decimals=2))
-    t2 = text(0.7, 0.65, 'Pearson = ' + number_formatter(pearsonCoefficientDuration1PercentDepthThreshold[0], decimals=2))
-    p5.Save, saveloc + 'DurationWith1PercentDepthThresholdVsFlareClass_' + coronalDimmingOutput[0].EveLineCenters[i] + '.png'
+    IF finiteSlope2PercentDepthThresholdCount GT 1 THEN BEGIN
+      ; Slope vs GOES class with 2% depth threshold
+      p3 = plot(coronalDimmingOutput[finiteSlope2PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteSlope2PercentDepthThreshold].Slope[i], SYMBOL = 'square', LINESTYLE = 'none', /BUFFER, $
+                TITLE = 'Slope For ≥ 2% Depth Versus Flare Class for ' + coronalDimmingOutput[0].EveLineCenters[i] + 'Å, ' + strtrim(finiteSlope2PercentDepthThresholdCount, 2) + ' events', $
+                YTITLE = 'Slope [W/m!U2!N/s]', YRANGE = [0, 9E-9], $
+                XTITLE = 'GOES Flare Class', XRANGE = [1E-5, 1E-3], XTICKNAME = ['M', 'X', ''], /XLOG)
+      t1 = text(0.7, 0.7, 'Spearman = ' + number_formatter(spearmanCoefficientSlope2PercentDepthThreshold[0], decimals=2))
+      t2 = text(0.7, 0.65, 'Pearson = ' + number_formatter(pearsonCoefficientSlope2PercentDepthThreshold[0], decimals=2))
+      p3.Save, saveloc + 'SlopeWith2PercentDepthThresholdVsFlareClass_' + coronalDimmingOutput[0].EveLineCenters[i] + '.png'
+      p3.Close
+    ENDIF
     
-    ; Duration vs GOES class with 2% depth threshold
-    p6 = plot(coronalDimmingOutput[finiteDuration2PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteDuration2PercentDepthThreshold].EventDurationInSeconds[i], SYMBOL = 'square', LINESTYLE = 'none', /BUFFER, $
-              TITLE = 'Dimming Duration For ≥ 2% Depth Versus Flare Class for ' + coronalDimmingOutput[0].EveLineCenters[i] + 'Å, ' + strtrim(finiteDuration2PercentDepthThresholdCount, 2) + ' events', $
-              YTITLE = 'Dimming Duration [seconds]', $;, YRANGE = [-2E-9, 2E-9], $
-              XTITLE = 'GOES Flare Class', XRANGE = [1E-5, 1E-3], XTICKNAME = ['M', 'X', ''], /XLOG)
-    t1 = text(0.7, 0.7, 'Spearman = ' + number_formatter(spearmanCoefficientDuration2PercentDepthThreshold[0], decimals=2))
-    t2 = text(0.7, 0.65, 'Pearson = ' + number_formatter(pearsonCoefficientDuration2PercentDepthThreshold[0], decimals=2))
-    p6.Save, saveloc + 'DurationWith2PercentDepthThresholdVsFlareClass_' + coronalDimmingOutput[0].EveLineCenters[i] + '.png'
+    IF finiteDurationCount GT 1 THEN BEGIN
+      ; Duration vs GOES class
+      p4 = plot(coronalDimmingOutput.GoesFlux, coronalDimmingOutput.EventDurationInSeconds[i], SYMBOL = 'square', LINESTYLE = 'none', /BUFFER, $
+                TITLE = 'Dimming Duration Versus Flare Class for ' + coronalDimmingOutput[0].EveLineCenters[i] + 'Å, ' + strtrim(finiteDurationCount, 2) + ' events', $
+                YTITLE = 'Dimming Duration [seconds]', $;, YRANGE = [-2E-9, 2E-9], $
+                XTITLE = 'GOES Flare Class', XRANGE = [1E-5, 1E-3], XTICKNAME = ['M', 'X', ''], /XLOG)
+      t1 = text(0.7, 0.7, 'Spearman = ' + number_formatter(spearmanCoefficientDuration[0], decimals=2))
+      t2 = text(0.7, 0.65, 'Pearson = ' + number_formatter(pearsonCoefficientDuration[0], decimals=2))
+      p4.Save, saveloc + 'DurationVsFlareClass_' + coronalDimmingOutput[0].EveLineCenters[i] + '.png'
+    ENDIF
     
-    p7 = plot(coronalDimmingOutput.GoesFlux, coronalDimmingOutput.PercentDepth[i], SYMBOL = 'square', LINESTYLE = 'none', /BUFFER, $
-              TITLE = 'Dimming %Depth Versus Flare Class for ' + coronalDimmingOutput[0].EveLineCenters[i] + 'Å, ' + strtrim(finiteDepthCount, 2) + ' events', $
-              YTITLE = 'Dimming Depth [%]', YRANGE = [0, 10], $
-              XTITLE = 'GOES Flare Class', XRANGE = [1E-5, 1E-3], XTICKNAME = ['M', 'X', ''], /XLOG)
-    t1 = text(0.7, 0.7, 'Spearman = ' + number_formatter(spearmanCoefficientDepth[0], decimals=2))
-    t2 = text(0.7, 0.65, 'Pearson = ' + number_formatter(pearsonCoefficientDepth[0], decimals=2))
-    p7.Save, saveloc + 'PercentDepthVsFlareClass_' + coronalDimmingOutput[0].EveLineCenters[i] + '.png'
+    IF finiteDuration1PercentDepthThresholdCount GT 1 THEN BEGIN
+      ; Duration vs GOES class with 1% depth threshold
+      p5 = plot(coronalDimmingOutput[finiteDuration1PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteDuration1PercentDepthThreshold].EventDurationInSeconds[i], SYMBOL = 'square', LINESTYLE = 'none', /BUFFER, $
+                TITLE = 'Dimming Duration For ≥ 1% Depth Versus Flare Class for ' + coronalDimmingOutput[0].EveLineCenters[i] + 'Å, ' + strtrim(finiteDuration1PercentDepthThresholdCount, 2) + ' events', $
+                YTITLE = 'Dimming Duration [seconds]', $;, YRANGE = [-2E-9, 2E-9], $
+                XTITLE = 'GOES Flare Class', XRANGE = [1E-5, 1E-3], XTICKNAME = ['M', 'X', ''], /XLOG)
+      t1 = text(0.7, 0.7, 'Spearman = ' + number_formatter(spearmanCoefficientDuration1PercentDepthThreshold[0], decimals=2))
+      t2 = text(0.7, 0.65, 'Pearson = ' + number_formatter(pearsonCoefficientDuration1PercentDepthThreshold[0], decimals=2))
+      p5.Save, saveloc + 'DurationWith1PercentDepthThresholdVsFlareClass_' + coronalDimmingOutput[0].EveLineCenters[i] + '.png'
+    ENDIF
     
-  ENDFOR
+    IF finiteDuration2PercentDepthThresholdCount GT 1 THEN BEGIN
+      ; Duration vs GOES class with 2% depth threshold
+      p6 = plot(coronalDimmingOutput[finiteDuration2PercentDepthThreshold].GoesFlux, coronalDimmingOutput[finiteDuration2PercentDepthThreshold].EventDurationInSeconds[i], SYMBOL = 'square', LINESTYLE = 'none', /BUFFER, $
+                TITLE = 'Dimming Duration For ≥ 2% Depth Versus Flare Class for ' + coronalDimmingOutput[0].EveLineCenters[i] + 'Å, ' + strtrim(finiteDuration2PercentDepthThresholdCount, 2) + ' events', $
+                YTITLE = 'Dimming Duration [seconds]', $;, YRANGE = [-2E-9, 2E-9], $
+                XTITLE = 'GOES Flare Class', XRANGE = [1E-5, 1E-3], XTICKNAME = ['M', 'X', ''], /XLOG)
+      t1 = text(0.7, 0.7, 'Spearman = ' + number_formatter(spearmanCoefficientDuration2PercentDepthThreshold[0], decimals=2))
+      t2 = text(0.7, 0.65, 'Pearson = ' + number_formatter(pearsonCoefficientDuration2PercentDepthThreshold[0], decimals=2))
+      p6.Save, saveloc + 'DurationWith2PercentDepthThresholdVsFlareClass_' + coronalDimmingOutput[0].EveLineCenters[i] + '.png'
+    ENDIF
+    
+    IF finiteDepthCount GT 1 THEN BEGIN
+      p7 = plot(coronalDimmingOutput.GoesFlux, coronalDimmingOutput.PercentDepth[i], SYMBOL = 'square', LINESTYLE = 'none', /BUFFER, $
+                TITLE = 'Dimming %Depth Versus Flare Class for ' + coronalDimmingOutput[0].EveLineCenters[i] + 'Å, ' + strtrim(finiteDepthCount, 2) + ' events', $
+                YTITLE = 'Dimming Depth [%]', YRANGE = [0, 10], $
+                XTITLE = 'GOES Flare Class', XRANGE = [1E-5, 1E-3], XTICKNAME = ['M', 'X', ''], /XLOG)
+      t1 = text(0.7, 0.7, 'Spearman = ' + number_formatter(spearmanCoefficientDepth[0], decimals=2))
+      t2 = text(0.7, 0.65, 'Pearson = ' + number_formatter(pearsonCoefficientDepth[0], decimals=2))
+      p7.Save, saveloc + 'PercentDepthVsFlareClass_' + coronalDimmingOutput[0].EveLineCenters[i] + '.png'
+    ENDIF
+    
+    message, /INFO, 'Dimming vs GOES correlations: ' + strtrim((i + 1.) / numLines * 100., 2) + '% complete'
+    
+  ENDFOR ; loop over emission lines
 
 ENDIF ; producePlot = 1
 

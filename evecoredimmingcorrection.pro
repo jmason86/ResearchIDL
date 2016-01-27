@@ -64,13 +64,16 @@ IF ~keyword_set(YRANGE) THEN yRange = -1
 !Except = 0 ; Disable annoying divide by 0, overflow, and illegal operand messages
 
 ; Setup
-;saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/' + eventName
-saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/' + eventName + '/Warm correction/'
+saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/' + eventName + '/'
+;saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/' + eventName + '/Warm correction/'
 spawn, 'mkdir -p ' + str_replace(saveloc, ' ', '\ ', /GLOBAL) ; Unix doesn't like spaces in path strings
-eventName = ParsePathAndFilename(eventName)
-eventName = eventName.filename
-eventName = strmid(eventName, 0, 5) + ' #' + strmid(eventName, 5, strlen(eventName))
-
+eventNameParsed = ParsePathAndFilename(eventName)
+IF eventNameParsed.path NE '' THEN BEGIN
+  eventName = eventNameParsed.filename
+  eventName = strmid(eventName, 0, 5) + ' #' + strmid(eventName, 5, strlen(eventName)) 
+ENDIF ELSE BEGIN
+  eventName = 'Event # N/A'
+ENDELSE
 
 ; Grab EVE data
 eveLines = eve_merge_evl(yyyydoyStart, yyyydoyEnd, META = eveMeta, N_AVERAGE = number_of_10s_integrations_to_average) ; 10 second natural cadence averaged to specified number
@@ -81,6 +84,10 @@ eveTimeJD = anytim2jd(eveLines.TAI)
 eveTimeJD = eveTimeJD.int + eveTimeJD.frac
 eveTimeSOD = (eveTimeJD - floor(eveTimeJD[0]) - 0.5) * 86400.
 eventPeakIndex = closest(eventPeakSOD, eveTimeSOD)
+yyyyDoy = strtrim(yyyyDoyStart, 2)
+yyyymmdd = JPMyyyydoy2yyyymmdd(yyyyDoy, /RETURN_STRING)
+hhmmss = JPMsod2hhmmss(eventPeakSod, /RETURN_STRING)
+eventPeakSod = JPMPrintNumber(eventPeakSod, /NO_DECIMALS)
 
 ; If reference time provided, determine what index it corresponds to
 IF ~keyword_set(REFERENCE_TIME) THEN referenceIndex = 0 ELSE BEGIN
@@ -174,7 +181,7 @@ FOR i = 0, n_elements(dimNames) - 1 DO BEGIN
 
     ; Create plots of corrected lines
     p1 = plot(eveTimeJD, dimmingCurves[*, i], 'r2', /BUFFER, $
-              TITLE = eventName + ', YYYYDOY: ' + strtrim(string(yyyydoyStart, format = '(i7)'), 2) + ', SOD: ' + strtrim(fix(eventPeakSOD), 2), $
+              TITLE = eventName + ', YYYYMMDD: ' + yyyymmdd + ', Peak Time: ' + hhmmss, $
               XTITLE = 'Hour', XTICKUNITS = 'Hours', $
               YTITLE = '% Change', YRANGE = yRange, $
               NAME = dimNames[i])
@@ -182,11 +189,12 @@ FOR i = 0, n_elements(dimNames) - 1 DO BEGIN
               NAME = 'Scaled ' + brightNames[j])
     p3 = plot(eveTimeJD, correctedEVEDimmingCurves[*, k], '2', /OVERPLOT, $
               NAME = 'Corrected')
-    poly1 = polygon([[timeWindowLeftJD, p3.yrange[1]], [timeWindowRightJD, p3.yrange[1]], [timeWindowRightJD, p3.yrange[0]], [timeWindowLeftJD, p3.yrange[0]]], /DATA, $
+    fullYRange = minmax([p1.yrange, p2.yrange, p3.yrange])
+    poly1 = polygon([[timeWindowLeftJD, fullYRange[1]], [timeWindowRightJD, fullYRange[1]], [timeWindowRightJD, fullYRange[0]], [timeWindowLeftJD, fullYRange[0]]], /DATA, $
                     /FILL_BACKGROUND, FILL_COLOR = 'lime green', TRANSPARENCY = 50, $
                     NAME = 'Peak Match Window')
-    t1 = text((timeWindowRightJD - timeWindowLeftJD) / 2. + timeWindowLeftJD, p3.yrange[0], '$Peak \n Match \n Window$', /DATA, ALIGNMENT = 0.5, COLOR = 'white')
-    p4 = plot([eveTimeJD[referenceIndex], eveTimeJD[referenceIndex]], p1.yrange, '--', /OVERPLOT)
+    t1 = text((timeWindowRightJD - timeWindowLeftJD) / 2. + timeWindowLeftJD, fullYRange[0], '$Peak \n Match \n Window$', FONT_SIZE = 8, /DATA, ALIGNMENT = 0.5, COLOR = 'white')
+    p4 = plot([eveTimeJD[referenceIndex], eveTimeJD[referenceIndex]], fullYRange, '--', YRANGE = fullYRange, /OVERPLOT)
     t2 = text(eveTimeJD[referenceIndex], p1.yrange[1], 'Pre-flare Time', /DATA, ORIENTATION = 90, ALIGNMENT = 1)
     leg = legend(TARGET = [p1, p2, p3, poly1], POSITION = [0.92, 0.88])
     p1.save, saveloc + dimNames[i] + ' by ' + brightNames[j] + '.png'
@@ -208,15 +216,6 @@ FOR i = 0, n_elements(dimNames) - 1 DO BEGIN
     k++
   ENDFOR
 ENDFOR
-
-; Create variables for reference when save files are restored later
-yyyyDoy = strtrim(yyyyDoyStart, 2)
-yyyymmdd = yd2ymd(yyyyDoyStart)
-IF yyyymmdd[1] LT 10 THEN monthString = '0' + JPMPrintNumber(yyyymmdd[1], /NO_DECIMALS) ELSE monthString = JPMPrintNumber(yyyymmdd[1], /NO_DECIMALS)
-IF yyyymmdd[2] LT 10 THEN dayString =   '0' + JPMPrintNumber(yyyymmdd[2], /NO_DECIMALS) ELSE dayString =   JPMPrintNumber(yyyymmdd[2], /NO_DECIMALS)
-yyyymmdd = JPMPrintNumber(yyyymmdd[0], /NO_DECIMALS) + '/' + monthString + '/' + dayString
-hhmmss = JPMsod2hhmmss(eventPeakSod, /RETURN_STRING)
-eventPeakSod = JPMPrintNumber(eventPeakSod, /NO_DECIMALS)
 
 ; Output 
 save, yyyyDoy, yyyymmdd, hhmmss, eventPeakSod, correctedEVEDimmingCurves, eveTimeJD, dimByBrightNames, dimmingCurves, brighteningCurves, FILENAME = saveloc + 'EVEScaledIrradiances.sav', /COMPRESS

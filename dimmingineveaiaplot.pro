@@ -39,11 +39,12 @@ doLightCurvesPlot = 1
 ; END EDITS
 
 ; Setup
-saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/2010219_07AUG_1824_M1.0/'
+saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/2011216_04AUG_0357_M9.3/'
+;saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/2010219_07AUG_1824_M1.0/'
 ;saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/2011083_24MAR_1207_M1.0/'
 IF NoAIA EQ 0 THEN restore, saveloc + 'LightCurveData.sav' ; AIA light curves
-restore, saveloc + 'Warm correction/EVEScaledIrradiances.sav'
-restore, saveloc + 'Warm correction/EVELines.sav'
+restore, saveloc + 'EVEScaledIrradiances.sav'
+restore, saveloc + 'EVELines.sav'
 IF keyword_set(FOR_DEAN) THEN restore, saveloc + 'Warm correction/EVEScaledBrightCurves.sav'
 
 ; No AIA data yet
@@ -57,13 +58,18 @@ ENDIF
 
 ; Get time range
 timeRange = minmax(jd171) ;& timeRange[0] = timeRange[0] + 0.04 ; Scoot the zero time over to just prior to dimming
-slopeCalculationStartPoint = 2455416.243056 ; 2010/08/07 17:50 UT
+;slopeCalculationStartPoint = 2455416.243056 ; 2010/08/07 17:50 UT
+slopeCalculationStartPoint = 2455777.6632607984 ; 2011/08/04 03:55 UT
 timeStartIndex = closest(timeRange[0], jd171, /LOWER)
 
 ; Get AIA totals for 171Å, 193Å and 211Å and convert to percent change
 aia171 = total171
 aia193 = total193
-aia211 = total211
+;aia211 = total211
+aia211 = total304 ; FIXME: This is just for the 2011 August 4 event, which analyzed 304 insted of 211
+cutouts211 = cutouts304 ; FIXME: Same as above
+initial211Total = initial304total ; FIXME: Same as above
+jd211 = jd304 ; FIXME: Same as above
 aiaper171 = perdiff(aia171, aia171[timeStartIndex])
 aiaper193 = perdiff(aia193, aia193[timeStartIndex])
 aiaper211 = perdiff(aia211, aia211[timeStartIndex])
@@ -82,8 +88,8 @@ perCoreDimming193 = perdiff(cutouts193[*, 0], initial193Total, /RELATIVE)
 perCoreDimming211 = perdiff(cutouts211[*, 0], initial211Total, /RELATIVE)
 ;minAIACoreDimming171 = min(perCoreDimming171, minAIACoreDimming171Index)
 ;minAIACoreDimming171Time = jd171[minAIACoreDimming171Index]
-minAIACoreDimming171Time = 2455416.3286266202d ; August 7, 2010 event
-;minAIACoreDimming171Time = 2455777.7916666d ; August 4, 2011 event
+;minAIACoreDimming171Time = 2455416.3286266202d ; August 7, 2010 event
+minAIACoreDimming171Time =  2455777.7153442590d ; August 4, 2011 event 05:10 UT
 minAIACoreDimming171 = perCoreDimming171[closest(minAIACoreDimming171Time, jd171, /LOWER)]
 minAIACoreDimming193 = perCoreDimming193[closest(minAIACoreDimming171Time, jd193, /LOWER)]
 minAIACoreDimming211 = perCoreDimming211[closest(minAIACoreDimming171Time, jd211, /LOWER)]
@@ -205,10 +211,10 @@ FOR dimIndex = 0, n_elements(dimByBrightNames) - 1 DO BEGIN
     ;a4 = arrow([timeRange[0], minAIACoreDimming171Time], [0, minAIACoreDimming171], COLOR = 'red', ARROW_STYLE = 3, THICK = 2, /DATA)
     t1 = text(0.24, 0.26, 'AIA Region 1 Depth  = ' + strmid(strtrim(aiaCoreDimmingDepth171, 2), 0, 4) + ' %, Slope = ' + string(aiaCoreDimmingSlope171, format = '(F0.2)') + ' %/hour')
     t2 = text(0.24, 0.22, 'EVE Dimming Depth = ' + strmid(strtrim(eveCorrectedDepth, 2), 0, 4) + ' %, Slope = ' + string(eveCorrectedSlope, format = '(F0.2)') + ' %/hour')
-    ;t1 = text(0.23, 0.26, 'AIA Region 1 Dimming Depth    = 2.94%, Slope = 2.22%/hour')
-    ;t2 = text(0.23, 0.22, 'Corrected EVE Dimming Depth = 2.94%, Slope = 2.29%/hour')
+    ;t1 = text(0.24, 0.26, 'AIA Region 1 Dimming Depth    = 2.94%, Slope = 2.22%/hour')
+    ;t2 = text(0.24, 0.22, 'Corrected EVE Dimming Depth = 2.94%, Slope = 2.29%/hour')
     leg = legend(TARGET = [p1, p2, p3, p4, p5, p6], POSITION = [0.92, 0.87])
-    
+
     IF keyword_set(FOR_DEAN) AND dimIndex EQ 3 THEN BEGIN ; only do this for 171 by 284
       p1 = plot(eveTimeJD, dimmingCurves[*, 3], COLOR = 'black', '2', $
                 TITLE  = '171 Å Corrected by 284 Å', FONT_SIZE = fontSize, $
@@ -227,7 +233,6 @@ FOR dimIndex = 0, n_elements(dimByBrightNames) - 1 DO BEGIN
       leg = legend(TARGET = [p1, p2, p3, p4], POSITION = [0.92, 0.87])
       t3 = text(0.77, 0.7355, '(171 -        )', TARGET = [leg])
       t4 = text(0.84, 0.7355, '284', TARGET = [leg], COLOR = 'green')
-      STOP
     ENDIF
     
   ENDIF ELSE IF currentDimmingLine EQ '195' THEN BEGIN 
@@ -271,7 +276,7 @@ FOR dimIndex = 0, n_elements(dimByBrightNames) - 1 DO BEGIN
     leg = legend(TARGET = [p1, p2], POSITION = [0.92, 0.88])
   ENDELSE
   
-  p1.Save, saveloc + 'EVECorrectedVsAIADimming_' + dimByBrightNames[dimIndex] + '.eps'
+  p1.Save, saveloc + 'EVECorrectedVsAIADimming_' + dimByBrightNames[dimIndex] + '.png'
 ENDFOR
 
 ; -= END PLOT DIMMING LIGHT CURVES -= ;
