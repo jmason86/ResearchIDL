@@ -50,8 +50,8 @@ arcsecArray = range(lowerBound, upperBound, NPTS = 1024)
 
 IF ~keyword_set(PUBLICATION) THEN BEGIN
   ; -= STANDARD NON-PUBLICATION PLOTS =- ;
-  
-  w = window(DIMENSIONS = [2000, 1000], /DEVICE, /BUFFER)
+  STOP
+  w = window(DIMENSIONS = [2000, 1000], /DEVICE);, /BUFFER)
   i = image(referenceImage, arcsecArray, arcsecArray, AXIS_STYLE = 2, /CURRENT, POSITION = [0.05, 0.05, 0.45, 0.95], $
             TITLE = 'AIA 171 Dimming Image', $
             XTITLE = 'Arcsec', $
@@ -79,15 +79,16 @@ IF ~keyword_set(PUBLICATION) THEN BEGIN
   ENDIF ; 193 data exists
   
   ; 171Å
-  IF n_elements(cutouts171[0, *]) GT 5 THEN dimmingTotal171 = total(cutouts171[*, 0:1], 2) + total(cutouts171[*, 4:*], 2) ELSE $
+  IF n_elements(cutouts171[0, *]) GT 5 THEN dimmingTotal171 = total(cutouts171[*, 0:2], 2) + total(cutouts171[*, 4:*], 2) ELSE $
     dimmingTotal171 = total(cutouts171[*, 0:1], 2) + total(cutouts171[*, 4])
   IF dimmingTotal171 GT [0] THEN BEGIN
     p = plot(jd171, perdiff(dimmingTotal171, initial171Total, /RELATIVE), THICK = 4, /CURRENT, POSITION = [0.5, 0.4, 0.98, 0.62], $
              TITLE = 'AIA 171 Light Curves', $
              XTITLE = 'Time [UTC Hours]', XRANGE = minmax(jd171), XTICKUNITS = 'Hours', $
              YTITLE = '% Change');, YRANGE = [-2, 2])
-    FOR i = 0, n_elements(cutouts171[0, *]) - 1 DO $
+    FOR i = 0, n_elements(cutouts171[0, *]) - 1 DO BEGIN
       p = plot(jd171, perdiff(cutouts171[*, i], initial171Total, /RELATIVE), THICK = 4, COLOR = JPMColors(i + 1, /SIMPLE), /OVERPLOT)
+    ENDFOR
   ENDIF ; 171 data exists
   
   ; 304Å

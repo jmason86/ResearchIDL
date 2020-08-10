@@ -62,7 +62,7 @@ function eve_merge_evs,start_yyyydoy,stop_yyyydoy,n_average=n_average,meta=meta,
         end
         result[(j*24+hour)*n_new_result:(j*24+hour+1)*n_new_result-1]=this_result
       end else begin
-        message,"Didn't read spectrum - status code "+string(s)
+        ;message,"Didn't read spectrum - status code ";+string(s)
       end
     end
   end

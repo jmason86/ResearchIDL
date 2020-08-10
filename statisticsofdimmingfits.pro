@@ -51,13 +51,21 @@ ENDELSE
 saveloc = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/Fitting/'
 
 IF keyword_set(REPROCESS_FITS) THEN BEGIN
+  ; Remove existing csv file for parameters
+  file_delete, saveloc + 'Fit Parameters.csv', /QUIET
+  get_lun, lun
+  openw, lun, saveloc + 'Fit Parameters.csv'
+  printf, lun, 'EventNumber, DepthPercent, DepthUncertainty, SlopePercentPerSecond, SlopeUncertainty'
+  close, lun
+  free_lun, lun
+  
   ; Create storage arrays
   allBestFits = strarr(numberOfEvents)
   allBestFitChis = fltarr(numberOfEvents)
   
   ; Loop through all events and store best fit information 
   storageIndex = 0
-  FOR eventNumber = 1, 38 DO BEGIN
+  FOR eventNumber = 1., 38. DO BEGIN
     bestFit = !NULL
     FitCoronalDimmingLightCurve, eventNumber = eventNumber, bestFitOut = bestFit, bestFitChiOut = bestFitChi, SKIP_BAD_EVENTS = SKIP_BAD_EVENTS
     IF bestFit EQ !NULL THEN CONTINUE
@@ -101,7 +109,7 @@ IF n_elements(pol53Chis) EQ 1 THEN poly5HistogramWidth = 0.5 ELSE poly5Histogram
 w = window(DIMENSIONS = [700, 800])
 b1 = barplot(histogramPlaceHolderX, histogramData, TITLE = '"Best Fit" Histogram', /CURRENT, MARGIN = 0.1, AXIS_STYLE = 1, $
              XTEXT_ORIENTATION = 60, $
-             YTITLE = 'Number of ' + JPMPrintNumber(numberOfEvents) + ' Events With Best Fit', YRANGE = [0, 20])
+             YTITLE = 'Number of ' + JPMPrintNumber(numberOfEvents, /NO_DECIMALS) + ' Events With Best Fit', YRANGE = [0, 20])
 b1.XTICKNAME = names
 
 IF numberOfParabolas NE 0 THEN $

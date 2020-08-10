@@ -9,7 +9,12 @@
 ;   None
 ;   
 ; OPTIONAL INPUTS:
-;   None
+;   wavelengths [strarr]: An array of string for the wavelegnth(s) to download. Default is ['171', '193', '304']. 
+;   startTimeIso [string]: An ISO format time for the start range of interest. Default is '2011-03-03T02:00:00Z'. 
+;   stopTimeIso [string]:  An ISO format time for the stop range of interest. Default is 1 day beyond the start time. 
+;   cadenceSeconds [integer]: The cadence of desired observations in seconds. Default is 3600. 
+;   resolution [integer]: The resolution of the images to download. Options are 1024 or 4096. Default is 4096. 
+;   saveTo [string]: The path to the location to save the output. Default is '/Users/' + getenv('username') + '/Dropbox/Research/Data/AIA/'
 ;   
 ; KEYWORD PARAMETERS:
 ;   DO_PSF: If set, will do point spread function deconvolution of all images for relevant wavelengths. NOTE: Must be performed on level 1.0 images. 
@@ -27,28 +32,28 @@
 ;   GetAIAData
 ;   
 ; MODIFICATION HISTORY: 
-;   Written by: 
-;     James Paul Mason 
-;     2012/3/20
-;     2013/12/03: JPM: Added DO_PSF keyword
+;   2012-03-20: James Paul Mason: Wrote script
+;   2013-12-03: James Paul Mason: Added DO_PSF keyword
+;   2017-02-08: James Paul Mason: Changed from hard code to optional inputs for what to download and where
 ;-
-PRO GetAIAData, DO_PSF = DO_PSF, SKIP_DOWNLOAD = SKIP_DOWNLOAD
+PRO GetAIAData, wavelengths = wavelengths, startTimeIso = startTimeIso, stopTimeIso = stopTimeIso, cadenceSeconds = cadenceSeconds, resolution = resolution, saveto = saveto, $
+                DO_PSF = DO_PSF, SKIP_DOWNLOAD = SKIP_DOWNLOAD
 
-; Make edits here
+; Defaults
+IF wavelengths EQ !NULL THEN wavelengths = ['171', '193', '304']
+IF startTimeIso EQ !NULL THEN startTimeIso = '2011-03-03T02:00:00Z'
+startTimeIsoTemp = startTimeIso
+IF stopTimeIso EQ !NULL THEN stopTimeIso = JPMjd2iso(JPMiso2jd(startTimeIsoTemp) + 1.)
+IF cadenceSeconds EQ !NULL THEN cadenceSeconds = 3600
+IF resolution EQ !NULL THEN resolution = 4096
+IF saveTo EQ !NULL THEN saveTo = '/Users/' + getenv('username') + '/Dropbox/Research/Data/AIA/'
+
+; Fixed values
 series = 'aia__lev1' ; 'aia.lev1_euv_12s' ; aia__lev1 ; aia.lev1
-wavelengths = ['171', '193', '304']
-startTime = '2011-mar-3 02:00'
-endTime =   '2011-mar-3 07:00'
-cadence = 60 ; Seconds
-resolution = 4096 ; One-dimensional resolution e.g., 1024 means 1024 x 1024, 4096 means 4096 x 4096
-saveto = '/archvol1/mason/ResearchData/SDO/AIA/FullDisk/2011082_23MAR_0217_M1.4/'
 preppedto = 'prepped/'
-downloadSite = 'SAO' ; Other options: nso, sdac, sao
-; End edits                                         `                                                 
+downloadSite = 'SAO' ; Other options: nso, sdac, sao                                       `                                                 
 
-spawn, 'mkdir ' + saveto
-spawn, 'mkdir ' + saveto + preppedto
-CD, saveto
+cd, saveto
 
 FOR wavelengthIndex = 0 , n_elements(wavelengths) - 1 DO BEGIN
 
@@ -57,7 +62,8 @@ FOR wavelengthIndex = 0 , n_elements(wavelengths) - 1 DO BEGIN
   IF ~keyword_set(SKIP_DOWNLOAD) THEN BEGIN
   
     ; Search data at the VSO
-    list = vso_search(startTime, endTime, WAVE = wavelength, INSTRUMENT = 'aia', SAMPLE = cadence, PIXELS = resolution, SITE = downloadSite, /RICE)
+    list = vso_search(strmid(startTimeIso, 0, 10), strmid(stopTimeIso, 0, 10), WAVE = wavelength, INSTRUMENT = 'aia', SAMPLE = cadence, $
+                        PIXELS = resolution, SITE = downloadSite, /RICE)
     
     ; Sometimes the VSO search won't find the series you're looking for so skip this wavelength
     IF n_elements(list) EQ 1 THEN BEGIN
@@ -71,7 +77,7 @@ FOR wavelengthIndex = 0 , n_elements(wavelengths) - 1 DO BEGIN
     ENDIF
     
     ; Download data from the VSO
-    status = vso_get(list, OUTDIR = saveto, /FORCE, /RICE, SITE = downloadSite)
+    status = vso_get(list[0], OUTDIR = saveto, /FORCE, /RICE, SITE = downloadSite)
      
     ; Files seems to come back undefined often, so check for it to avoid crashing
     files = file_search(saveto + '*.fits')

@@ -24,7 +24,7 @@
 ;   Requires readcol, GetEVEInPercentChange, JPMColors, closest
 ;
 ; EXAMPLE:
-;   Two2WeekPeriodsInEVE
+;   Just run it! 
 ;
 ; MODIFICATION HISTORY:
 ;     2013/09/24: James Paul Mason: Wrote procedure
@@ -99,7 +99,7 @@ ENDIF ELSE BEGIN ; End no EVE correction, begin using EVE correction
   ticObject22Week = TIC()
   
   ; Loop through all events
-  FOR eventIndex = 15, 15 DO BEGIN ;n_elements(allPreFlareSods) - 1 DO BEGIN 
+  FOR eventIndex = 20, n_elements(allPreFlareSods) - 1 DO BEGIN 
     eventName = 'EVEPlots/Corrected/' + 'Event' + strtrim(string(eventIndex + 1), 2)
     correctedSaveloc = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/' + eventName
     

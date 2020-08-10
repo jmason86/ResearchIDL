@@ -6,7 +6,8 @@
 ;   Retrieve EVE line data and convert it to %change from the start time (always midnight because of the way eve_merge_evl works as of 2013/09/25) or a user selected time.
 ;
 ; INPUTS:
-;   
+;   startYYYYDOY [long]: The start date for EVE data in yyyydoy format
+;   endYYYYDOY [long]:   The end date for EVE data in yyyydoy format
 ;
 ; OPTIONAL INPUTS:
 ;   REFERENCE_TIME [integer]: Second of day to use as reference. Nearest point in EVE timeseries will be used. 
@@ -16,11 +17,11 @@
 ;   CHOOSE_REFERENCE_TIME: Enable to show a plot of 171 for help manually selecting a reference time
 ;
 ; OUTPUTS:
-;   percentChangeOut [fltarr]: All of the EVE extracted lines converted to percentage units referenced to the REFERENCE_TIME
-;   sodOut [dblarr]: The second of day for the EVE extracted lines
+;   None
 ;
 ; OPTIONAL OUTPUTS:
-;
+;   percentChangeOut [fltarr]: All of the EVE extracted lines converted to percentage units referenced to the REFERENCE_TIME
+;   jdOut [dblarr]:            The julian date
 ;
 ; RESTRICTIONS:
 ;   SolarSoft EVE package
@@ -29,12 +30,11 @@
 ;   GetEVEInPercentChange, 2011041, 2011041, REFERENCE_TIME = 17100, evePercentChange, sod
 ;
 ; MODIFICATION HISTORY:
-;   Written by:
-;     James Paul Mason
-;     2013/09/25
+;   2013-09-25: James Paul Mason: Wrote script
+;   2017-10-25: James Paul Mason: Updated header to conform to my standard, and changed sodOut to jdOut
 ;-
 PRO GetEVEInPercentChange, startYYYYDOY, endYYYYDOY, REFERENCE_TIME = reference_time, NUMBER_OF_10s_INTEGRATIONS_TO_AVERAGE = number_of_10s_integrations_to_average, CHOOSE_REFERENCE_TIME = choose_reference_time, $
-                           percentChangeOut, sodOut
+                           percentChangeOut = percentChangeOut, jdOut = jdOut, eveMetaOut = eveMetaOut
 
 IF ~keyword_set(NUMBER_OF_10s_INTEGRATIONS_TO_AVERAGE) THEN number_of_10s_integrations_to_average = 6
 
@@ -70,8 +70,9 @@ FOR i = 0, n_elements(eveLines[*, 0]) - 1 DO $
 
 ; Output values
 percentChangeOut = percentChange
-sodOut = eveData.sod
-jdOut = anytim2jd(eveData.tai)
+jdStruct = anytim2jd(eveData.tai)
+jdOut = jdStruct.int + jdStruct.frac
+eveMetaOut = eveMeta
 
 END
 

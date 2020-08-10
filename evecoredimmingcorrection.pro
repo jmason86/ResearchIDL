@@ -5,20 +5,23 @@
 ; PURPOSE:
 ;   Messy code to figure out how to correct EVE 171Å to remove the irradiance spike and baseline change due to a flare in order to get 
 ;   something approximating the core dimming that can be gotten from AIA 171Å. 
-;   Determined that 211 is the best "hot" line to use to correct all of the dimming lines. 
 ;
 ; INPUTS:
-;   yyyydoyStart [integer]: The start date. Start time is 00:00:00 UTC. 
-;   yyyydoyEnd   [integer]: The end date. End time is 23:59:59 UTC. 
-;   eventPeakSOD [integer]: The rough second of day where the peak occurs. A 4 hour window surrounding this time will be used to find the peak
-;   eventName    [string]:  Used for creating a unique directory. 
+;   yyyydoyStart [integer]:             The start date. Start time is 00:00:00 UTC. 
+;   yyyydoyEnd   [integer]:             The end date. End time is 23:59:59 UTC. 
+;   OR 
+;   eveLines     [array of structures]: An array that indexes through time with a standard EVE lines product at each index (as returned from eve_merge_evl.pro). 
+;                                       If this variable is provided, then it is not necessary to provide yyyydoyStart and yyyydoyEnd and vice versa. 
+;   eventPeakSOD [integer]:             The rough second of day where the peak occurs. A 4 hour window surrounding this time will be used to find the peak
+;   eventName    [string]:              Used for creating a unique directory. 
 ;   
 ; OPTIONAL INPUTS:
 ;   NUMBER_OF_10s_INTEGRATIONS_TO_AVERAGE [integer]: Determines the average of EVE data
 ;   REFERENCE_TIME [integer]:                        Second of day to use as reference. Nearest point in EVE timeseries will be used. 
 ;   measurementError [float]:                        If this value is provided, it will be passed to perdiff.pro and will calculate uncertainties for the correction. 
 ;   YRANGE [float, float]:                           Standard YRANGE optional input for the plot command. Intended for special case analysis where axis gets blown out. 
-;   
+;   runOn [string]:                                  Set this to 'case' or 'twotwo' or 'megsa' to store into the Case Studies or Two Two Week Period or Automatic Dimming Database folder
+; 
 ; KEYWORD PARAMETERS:
 ;   EXTRAPOLATE_PRE_FLARE: Set this keyword in order to extrapolate the pre-flare trend out to the end of the day. Intended for characterizing 
 ;                          the uncertainty of dimming depth parameterization. Uses 1 hour prior to reference_time to compute extrapolation. 
@@ -31,7 +34,7 @@
 ;   None
 ;
 ; RESTRICTIONS:
-;   Requires solarsoft
+;   Requires solarsoft if using the yyyydoyStart and yyyydoyEnd inputs rather than eveLines input
 ;   Requires perdiff.pro
 ;
 ; EXAMPLE:
@@ -50,22 +53,27 @@
 ;                                   peak match window subarray rather than the full lightcurve array. 
 ;     2015/10/12: James Paul Mason: Introduced a fudge factor to deal with an event having a bright peak value of 0, that causes scaleFactor -> infinity. 
 ;                                   Now if brightPeak = 0, it forces brightPeak to 1E-3
+;     2016/09/30: James Paul Mason: Added eveLines optional input as an alternative to specifying yyyydoyStart and yyyydoyEnd. Also changed caseOrTwoTwoWeek to 
+;                                   runOn with additional optional input of 'megsa'.  
+;                                   
 ;-
 PRO EVECoreDimmingCorrection, yyyydoyStart, yyyydoyEnd, eventPeakSOD, eventName, $ 
-                              NUMBER_OF_10s_INTEGRATIONS_TO_AVERAGE = number_of_10s_integrations_to_average, REFERENCE_TIME = reference_time, $ 
-                              measurementError = measurementError, YRANGE = yRange, $
+                              eveLines = eveLines, NUMBER_OF_10s_INTEGRATIONS_TO_AVERAGE = number_of_10s_integrations_to_average, REFERENCE_TIME = reference_time, $ 
+                              measurementError = measurementError, YRANGE = yRange, runOn = runOn, $
                               EXTRAPOLATE_PRE_FLARE = EXTRAPOLATE_PRE_FLARE
 ; TODO: eventPeakSOD should really be seconds since yyyydoyStart in case spanning multiple days but that's too annoying to deal with right now
 
 ; Defaults
 IF ~keyword_set(NUMBER_OF_10s_INTEGRATIONS_TO_AVERAGE) THEN number_of_10s_integrations_to_average = 6
-IF ~keyword_set(measurementError) THEN measurementError = CalculateEVELinePrecision()
+IF ~keyword_set(measurementError) THEN measurementError = CalculateEVEFeLinePrecision()
 IF ~keyword_set(YRANGE) THEN yRange = -1
+IF ~keyword_set(runOn) THEN runOn = 'twotwo'
 !Except = 0 ; Disable annoying divide by 0, overflow, and illegal operand messages
 
 ; Setup
-saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/' + eventName + '/'
-;saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/' + eventName + '/Warm correction/'
+IF runOn EQ 'case' THEN saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/' + eventName + '/'
+IF runOn EQ 'twotwo' THEN saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/' + eventName + '/Warm correction/'
+IF runOn EQ 'megsa' THEN saveloc = '/Users/jama6159/Dropbox/Research/Postdoc_LASP/Analysis/Coronal Dimming/Automatic Dimming Database/' + eventName + '/Thermal Correction/'
 spawn, 'mkdir -p ' + str_replace(saveloc, ' ', '\ ', /GLOBAL) ; Unix doesn't like spaces in path strings
 eventNameParsed = ParsePathAndFilename(eventName)
 IF eventNameParsed.path NE '' THEN BEGIN
@@ -74,9 +82,10 @@ IF eventNameParsed.path NE '' THEN BEGIN
 ENDIF ELSE BEGIN
   eventName = 'Event # N/A'
 ENDELSE
+numberBadData = 0 ; Counter to be printed at end of program
 
 ; Grab EVE data
-eveLines = eve_merge_evl(yyyydoyStart, yyyydoyEnd, META = eveMeta, N_AVERAGE = number_of_10s_integrations_to_average) ; 10 second natural cadence averaged to specified number
+IF eveLines EQ !NULL THEN eveLines = eve_merge_evl(yyyydoyStart, yyyydoyEnd, META = eveMeta, N_AVERAGE = number_of_10s_integrations_to_average) ; 10 second natural cadence averaged to specified number
 
 ; Deal with time
 eveTimeTAI = eveLines.TAI
@@ -162,6 +171,12 @@ FOR i = 0, n_elements(dimNames) - 1 DO BEGIN
     IF brightPeak EQ 0 THEN brightPeak = 1E-3 ; Else will get scaleFactor = infinity
     scaleFactor = dimPeak / brightPeak 
     
+    ; Skip if no valid data in the window of interest
+    IF ~finite(scaleFactor) THEN BEGIN
+      numberBadData++
+      CONTINUE
+    ENDIF
+    
     ; Perform correction
     timeShiftByIndex = dimMaxIndex - brightMaxIndex
     scaledBrightCurve = shift(brighteningCurves[*, j], timeShiftByIndex) * scaleFactor
@@ -196,7 +211,7 @@ FOR i = 0, n_elements(dimNames) - 1 DO BEGIN
     t1 = text((timeWindowRightJD - timeWindowLeftJD) / 2. + timeWindowLeftJD, fullYRange[0], '$Peak \n Match \n Window$', FONT_SIZE = 8, /DATA, ALIGNMENT = 0.5, COLOR = 'white')
     p4 = plot([eveTimeJD[referenceIndex], eveTimeJD[referenceIndex]], fullYRange, '--', YRANGE = fullYRange, /OVERPLOT)
     t2 = text(eveTimeJD[referenceIndex], p1.yrange[1], 'Pre-flare Time', /DATA, ORIENTATION = 90, ALIGNMENT = 1)
-    leg = legend(TARGET = [p1, p2, p3, poly1], POSITION = [0.92, 0.88])
+    leg = legend(TARGET = [p1, p2, p3, poly1], POSITION = [0.92, 0.88]) ; FIXME: Remove this! Just for a plot in my 2-2 week paper
     p1.save, saveloc + dimNames[i] + ' by ' + brightNames[j] + '.png'
     
     ; Find the dimMaxIndex in the full array, not just the peak match window subarray (which is how its defined above)
@@ -211,8 +226,8 @@ FOR i = 0, n_elements(dimNames) - 1 DO BEGIN
     
     IF total(finite(uncertaintiesCorrectedEVEDimmingCurves[*, k])) EQ 0 THEN STOP ; DEBUG: Catch potential problems with uncertainty calculation
     
-    progressBarCorrection = JPMProgressBar(100. * (k + 1) / numberOfCombinations, progressBar = progressBarCorrection, NAME = 'Dimming Correction Progress', $
-                                           ticObject = ticObjectCorrection, runTimeText = runTimeTextCorrection, etaText = etaTextCorrection)
+    ;progressBarCorrection = JPMProgressBar(100. * (k + 1) / numberOfCombinations, progressBar = progressBarCorrection, NAME = 'Dimming Correction Progress', $
+    ;                                       ticObject = ticObjectCorrection, runTimeText = runTimeTextCorrection, etaText = etaTextCorrection)
     k++
   ENDFOR
 ENDFOR
@@ -227,6 +242,8 @@ save, yyyyDoy, yyyymmdd, hhmmss, eventPeakSod, uncertaintiesScaledBrightCurves, 
 save, yyyyDoy, yyyymmdd, hhmmss, eventPeakSod, uncertaintiesCorrectedEVEDimmingCurves, FILENAME = saveloc + 'UncertaintiesCorrectedEVEDimmingCurves.sav', /COMPRESS
 IF keyword_set(EXTRAPOLATE_PRE_FLARE) THEN save, fitParameters171, fitParameters177, fitParameters180, fitParameters195, fitParameters202, fitParameters211, correctedPreFlareTrendFits, $
       FILENAME = saveloc + 'ExtrapolatedPreFlareTrend.sav', /COMPRESS
+
+message, /INFO, JPMsystime() + ' Program completion with ' + JPMPrintNumber(numberBadData, /NO_DECIMALS) + ' cases of no data in window of interest'
 
 !Except = 1
 END

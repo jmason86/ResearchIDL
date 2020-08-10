@@ -39,8 +39,8 @@ doLightCurvesPlot = 1
 ; END EDITS
 
 ; Setup
-saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/2011216_04AUG_0357_M9.3/'
-;saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/2010219_07AUG_1824_M1.0/'
+;saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/2011216_04AUG_0357_M9.3/'
+saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/2010219_07AUG_1824_M1.0_original/'
 ;saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/2011083_24MAR_1207_M1.0/'
 IF NoAIA EQ 0 THEN restore, saveloc + 'LightCurveData.sav' ; AIA light curves
 restore, saveloc + 'EVEScaledIrradiances.sav'
@@ -165,7 +165,7 @@ FOR dimIndex = 0, n_elements(dimByBrightNames) - 1 DO BEGIN
   ; Apply scaling for correction to 284 Å
   IF keyword_set(FOR_DEAN) THEN BEGIN
     indexCorrespondingto120Minutes = 120 * 60 / (6 * 10) ; Assumes 1 minute average data (6 10-second samples)
-    eventPeakJD = JPMyyyyDoy2jd(yyyyDoy) - 0.5 + float(eventPeakSOD)/86400.
+    eventPeakJD = JPMyyyyDoy2jd(long(float(yyyyDoy))) - 0.5 + float(eventPeakSOD)/86400.
     eventPeakIndex = closest(eventPeakJD, eveTimeJD)
     dimPeak = max(dimmingCurves[((eventPeakIndex - indexCorrespondingto120Minutes) > 0):((eventPeakIndex + indexCorrespondingto120Minutes) < n_elements(eveTimeSOD)-1), 3], dimMaxIndex)
     brightPeak = max(brighteningCurves[((eventPeakIndex - indexCorrespondingto120Minutes) > 0):((eventPeakIndex + indexCorrespondingto120Minutes) < n_elements(eveTimeSOD)-1), 3], brightMaxIndex)
@@ -233,6 +233,9 @@ FOR dimIndex = 0, n_elements(dimByBrightNames) - 1 DO BEGIN
       leg = legend(TARGET = [p1, p2, p3, p4], POSITION = [0.92, 0.87])
       t3 = text(0.77, 0.7355, '(171 -        )', TARGET = [leg])
       t4 = text(0.84, 0.7355, '284', TARGET = [leg], COLOR = 'green')
+      save, eveTimeJD, dimmingCurves[*, 3], scaledBrightCure, correctedEVE, jd171, perCoreDimming171, aiaCoreDimmingDepth171, aiaCoreDimmingSlope171, eveCorrectedDepth, eveCorrectedSlope, $
+            FILENAME = '/Users/jama6159/Dropbox/DimmingCorrectionMethod.sav'
+            STOP
     ENDIF
     
   ENDIF ELSE IF currentDimmingLine EQ '195' THEN BEGIN 

@@ -1,6 +1,6 @@
 ;+
 ; NAME:
-;   PlotDimmingPaper2Figure4SlopeVsSpeedAndDepthVsMass
+;   PlotDimmingPaper2Figure4SlopeVsSpeedAndDepthVsMassBeforeFitexy
 ;
 ; PURPOSE:
 ;   Create two plots showing slope vs speed and depth vs mass
@@ -42,7 +42,7 @@
 ;   2015/12/08: James Paul Mason: Updated to handle the new upper/lower limits for mass/velocity agreed upon by CME co-authors
 ;   2015/12/21: James Paul Mason: Can handle fitting 3D only, high or low mass only, and should now be ready for final round of revisions by co-authors
 ;-
-PRO PlotDimmingPaper2Figure4SlopeVsSpeedAndDepthVsMass, FIT_3D_ONLY = FIT_3D_ONLY, FIT_HIGH_MASS_ONLY = FIT_HIGH_MASS_ONLY, FIT_LOW_MASS_ONLY = FIT_LOW_MASS_ONLY
+PRO PlotDimmingPaper2Figure4SlopeVsSpeedAndDepthVsMassBeforeFitexy, FIT_3D_ONLY = FIT_3D_ONLY, FIT_HIGH_MASS_ONLY = FIT_HIGH_MASS_ONLY, FIT_LOW_MASS_ONLY = FIT_LOW_MASS_ONLY
 
 ; Setup
 saveloc1 = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/'

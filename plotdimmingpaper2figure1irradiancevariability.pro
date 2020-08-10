@@ -16,7 +16,8 @@
 ;   REPROCESS_EVE_LEVEL3: Set this to reprocess from EVE level 3 data product instead of loading from the saveset that 
 ;                         already ran this code. 
 ;   REPROCESS_CMES:       Set this to reprocess the CME data insted of loeading from the saveset that already ran this code. 
-;
+;   DARK_BACKGROUND: Set this to make the plot background color transparent and flip the dark colors in the plot to light colors (e.g., black -> white text)
+;   
 ; OUTPUTS:
 ;   PNG and EPS versions of plot in 2 directories: 
 ;   1. Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/
@@ -36,7 +37,18 @@
 ; MODIFICATION HISTORY:
 ;   2015/07/14: James Paul Mason: Wrote script.
 ;-
-PRO PlotDimmingPaper2Figure1IrradianceVariability, REPROCESS_EVE_LEVEL3 = REPROCESS_EVE_LEVEL3, REPROCESS_CMES = REPROCESS_CMES
+PRO PlotDimmingPaper2Figure1IrradianceVariability, REPROCESS_EVE_LEVEL3 = REPROCESS_EVE_LEVEL3, REPROCESS_CMES = REPROCESS_CMES, DARK_BACKGROUND = DARK_BACKGROUND
+
+; Defaults
+IF keyword_set(DARK_BACKGROUND) THEN BEGIN
+  foregroundBlackOrWhite = 'white'
+  blueDarkOrLight = 'deep sky blue'
+  backgroundColor = 'purple' ; Will be used as the transparency mask for the png
+ENDIF ELSE BEGIN
+  foregroundBlackOrWhite = 'black'
+  blueDarkOrLight = 'blue'
+  backgroundColor = 'white'
+ENDELSE
 
 ; Setup
 saveloc1 = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/'
@@ -102,34 +114,40 @@ periodStop1JD = JPMyyyydoy2jd(2011055)
 periodStart2JD = JPMyyyydoy2jd(2011213)
 periodStop2JD = JPMyyyydoy2jd(2011226)
 
+w = window(BACKGROUND_COLOR = backgroundColor)
+
 ; Produce plot
-p1 = plot(eveJD, evePercent171, '3', TITLE = 'Historical Solar Variability', MARGIN = 0.1, AXIS_STYLE = 1, $
-          XTITLE = 'Time: 2011', XRANGE = [2455562.5, 2455927.5], XTICKUNITS = 'Months', $
-          YTITLE = 'SDO/EVE Daily Average 171 Å [%]', $
+p1 = plot(eveJD, evePercent171, '3', COLOR = foregroundblackorwhite, TITLE = 'Historical Solar Variability', MARGIN = 0.1, AXIS_STYLE = 1, /CURRENT, $
+          XTITLE = 'Time: 2011', XRANGE = [2455562.5, 2455927.5], XTICKUNITS = 'Months', XCOLOR = foregroundBlackOrWhite, $
+          YTITLE = 'SDO/EVE Daily Average 171 Å [%]', YCOLOR = foregroundBlackOrWhite, $
           NAME = 'EVE 171 Å')
-p3 = plot(p1.xrange, [0, 0], '--',  /CURRENT, MARGIN = 0.1, AXIS_STYLE = 4, $
+p3 = plot(p1.xrange, [0, 0], '--',  COLOR = foregroundBlackOrWhite, /CURRENT, MARGIN = 0.1, AXIS_STYLE = 4, $
           XRANGE = p1.xrange, $
           YRANGE = p1.yrange)
-p2 = plot(cmeJD, cmesPerDay, 'b2', /CURRENT, MARGIN = 0.1, AXIS_STYLE = 4, $
+p2 = plot(cmeJD, cmesPerDay, '2', COLOR = blueDarkOrLight, /CURRENT, MARGIN = 0.1, AXIS_STYLE = 4, $
           XRANGE = p1.xrange, $
           YRANGE = [0, 50], $
           NAME = 'CMEs Per Day')
-p4 = plot(p2.xrange, [mean(cmesPerDay), mean(cmesPerDay)], '--', COLOR = 'blue', /CURRENT, MARGIN = 0.1, AXIS_STYLE = 4, $
+p4 = plot(p2.xrange, [mean(cmesPerDay), mean(cmesPerDay)], '--', COLOR = blueDarkOrLight, /CURRENT, MARGIN = 0.1, AXIS_STYLE = 4, $
           XRANGE = p2.xrange, $
           YRANGE = p2.yrange)
 
-ax1 = axis('Y', LOCATION = 'right', TARGET = [p2], TITLE = 'Number of CMEs per Day', COLOR = 'blue')
-ax2 = axis('X', LOCATION = 'top', TARGET = [p2], TICKUNITS = 'Months', TEXT_COLOR = 'white')
-t1 = text(0.7, 0.5, '2010-2014 Mean')
-t2 = text(0.67, 0.13, '2008-2015 Mean', COLOR = 'blue')
+ax1 = axis('Y', LOCATION = 'right', TARGET = [p2], TITLE = 'Number of CMEs per Day', COLOR = blueDarkOrLight)
+ax2 = axis('X', LOCATION = 'top', TARGET = [p2], TICKUNITS = 'Months', SHOWTEXT = 0, COLOR = foregroundBlackOrWhite)
+t1 = text(0.7, 0.5, '2010-2014 Mean', COLOR = foregroundBlackOrWhite)
+t2 = text(0.67, 0.13, '2008-2015 Mean', COLOR = blueDarkOrLight)
 poly1 = polygon([[periodStart1JD, p2.yrange[0]], [periodStop1JD, p2.yrange[0]], [periodStop1JD, p2.yrange[1]], [periodStart1JD, p2.yrange[1]]], /DATA, TARGET = [p2], $
                 /FILL_BACKGROUND, FILL_COLOR = 'lime green', FILL_TRANSPARENCY = 20)
 poly2 = polygon([[periodStart2JD, p2.yrange[0]], [periodStop2JD, p2.yrange[0]], [periodStop2JD, p2.yrange[1]], [periodStart2JD, p2.yrange[1]]], /DATA, TARGET = [p2], $
                 /FILL_BACKGROUND, FILL_COLOR = 'lime green', FILL_TRANSPARENCY = 20)
 
-p1.save, saveloc1 + 'TwoTwoWeekInHistoricalContext.png'
-p1.save, saveloc2 + 'PNGs/TwoTwoWeekInHistoricalContext.png'
-p1.save, saveloc2 + 'EPSs/TwoTwoWeekInHistoricalContext.eps'
-save, FILENAME = saveloc2 + 'IDLSavesets/Figure1Saveset.sav', /COMPRESS
+STOP
+IF keyword_set(DARK_BACKGROUND) THEN p1.save, '/Users/jmason86/Dropbox/Research/Woods_LASP/Presentations/20160425 PhD Defense/Images/FourWeekContext.png', /TRANSPARENT $
+ELSE BEGIN
+  p1.save, saveloc1 + 'TwoTwoWeekInHistoricalContext.png'
+  p1.save, saveloc2 + 'PNGs/TwoTwoWeekInHistoricalContext.png'
+  p1.save, saveloc2 + 'EPSs/TwoTwoWeekInHistoricalContext.eps'
+  save, FILENAME = saveloc2 + 'IDLSavesets/Figure1Saveset.sav', /COMPRESS
+ENDELSE
 
 END

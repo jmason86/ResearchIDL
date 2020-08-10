@@ -28,9 +28,8 @@
 ;   GOESEventsToCSV, START_DATE = '15-feb-2011', END_DATE = '16-feb-2011'
 ;
 ; MODIFICATION HISTORY:
-;   Written by:
-;     James Paul Mason
-;     2013/09/03
+; 2013-09-03: James Paul Mason: Wrote script. 
+; 2018-06-25: James Paul Mason: Figured out that the first reported location is longitude and second is latitude. Made csv titles accordingly explicit. 
 ;-
 PRO GOESEventsToCSV, START_DATE = start_date, END_DATE = end_date, SAVE_LOCATION = saveloc
 
@@ -43,7 +42,7 @@ rd_gev, start_date, end_date, goesEvents
 
 ; Open csv file
 close,1 & openw, 1, saveloc + 'GOESEvents' + start_date + '.csv'
-printf, 1, 'Day, Time, Peak, Duration, Class, Location, Location' ; TODO: Add units
+printf, 1, 'Day, Time, Peak, Duration, Class, Longitude[º], Latitude[º]'
 
 FOR i = 0, n_elements(goesEvents.time) - 1 DO $
   printf, 1, goesEvents[i].day, ',', goesEvents[i].time, ',', goesEvents[i].peak, ',', goesEvents[i].duration, ',', string(goesEvents[i].st$class), ',', goesEvents[i].location[0], ',', goesEvents[i].location[1]

@@ -9,7 +9,7 @@
 ; INPUTS:
 ;   No formal input, but need to specify the directory where Tom's savesets are in the first line of hardcode
 ;
-; OPTIONAL INPUTS:r
+; OPTIONAL INPUTS:
 ;   None
 ;
 ; KEYWORD PARAMETERS:
@@ -22,31 +22,35 @@
 ;   None
 ;
 ; RESTRICTIONS:
-;   None
+;   Uses JPMsystime() and JPMPrintNumber(), but just for status so can comment out if undesired
 ;
 ; EXAMPLE:
 ;   MergeTomsEVEMergeFilesIntoOne
 ;
 ; MODIFICATION HISTORY:
-;   Written by:
-;     James Paul Mason
-;     2013-02-28
+;   2013-02-28: James Paul Mason: Wrote script
+;   2016-09-13: James Paul Mason: Now ignoring metalines variable stored in Tom's savesets because it is redundant 
+;                                 with what is already inside meta_all. Also renamed meta_all to eveMeta and 
+;                                 datalines to eveLines. Also made file path use getenv('username'). 
 ;-
 PRO MergeTomsEVEMergeFilesIntoOne
+tic
 
-files = file_search('/Users/jama6159/Dropbox/Research/Woods_LASP/Data/EVE/eve_lines_*.sav', COUNT = numFiles)
+; Find the files to merge
+files = file_search('/Users/'+ getenv('username') + '/Dropbox/Research/Data/EVE/eve_lines_*_005.sav', COUNT = numFiles)
 
+; Loop through the files and concatenate the emission line data and meta data
 FOR i = 0, numFiles - 1 DO BEGIN
   restore, files(i)
-  message, /INFO, "Restoring " + files(i) + "..."
+  message, /INFO, JPMsystime() + ' Restored ' + files(i)
   merged_datalines = (n_elements(merged_datalines) EQ 0) ? datalines : [merged_datalines, datalines]
-  merged_metalines = (n_elements(merged_metalines) EQ 0) ? metalines : [merged_metalines, metalines]
   merged_meta_all =  (n_elements(merged_metal_all) EQ 0) ? meta_all :  [merged_meta_all,  meta_all]
 ENDFOR
 
-datalines = merged_datalines
-metalines = merged_metalines
-meta_all = merged_meta_all
-save, datalines, metalines, meta_all, filename = '/Users/jama6159/Dropbox/Research/Woods_LASP/Data/EVE/JPMMerge.sav', /COMPRESS
-  
+; Rename the emission line and meta data and save
+eveLines = temporary(merged_datalines)
+eveMeta = temporary(merged_meta_all)
+save, eveLines, eveMeta, FILENAME = '/Users/' + getenv('username') + '/Dropbox/Research/Data/EVE/JPMMerge.sav', /COMPRESS
+
+message, /INFO, JPMsystime() + ' Merge and save complete in ' + JPMPrintNumber(toc(), /NO_DECIMALS) + ' seconds'
 END

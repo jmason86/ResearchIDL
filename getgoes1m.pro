@@ -38,7 +38,7 @@
 ; PROCEDURE:
 ;   1.  Check that parameters are valid
 ;   2.  Get the GOES data for given date (common block)
-;	3.  Extract requested data
+;	  3.  Extract requested data
 ;   4.  Set return variable (data)
 ;
 ; MODIFICATION HISTORY:
@@ -106,7 +106,7 @@ if size(lastyear,/type) eq 0 then lastyear = year
 if size(goes,/type) eq 0 or lastyear ne year then begin
   gdir = getenv('see_analysis')
   if (strlen(gdir) gt 0) then gdir = gdir + '/goes/' $
-  else gdir = '/Users/jama6159/IDLWorkspace85/Woods IDL Library/goes/'
+  else gdir = '/Users/jmason86/Dropbox/Development/IDLWorkspace85/Woods IDL Library/goes/'
   sfile = 'goes_1mdata_widx_'+strtrim(year,2)+'.sav'
   print, 'GETGOES1M():  restoring ', sfile
   restore, gdir + sfile

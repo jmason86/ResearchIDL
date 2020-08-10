@@ -3,7 +3,8 @@
 ;   FitCoronalDimmingLightCurve
 ;
 ; PURPOSE:
-;   Compare various fits to EVE dimming light curves.
+;   Compare various fits to EVE dimming light curves and parameterize depth and slope. Intended for lots of manual input for a handful 
+;   of events. See AutomaticFitCoronalDimmingLightCurve for similar code that requires no manually-specified input. 
 ;
 ; INPUTS:
 ;   None. 
@@ -52,10 +53,10 @@ IF keyword_set(SKIP_BAD_EVENTS) THEN $
 
 ; Setup
 saveloc = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/Fitting/'
-savename = 'Event' + JPMPrintNumber(eventNumber) + ' 171 Å Fit'
+savename = 'Event' + JPMPrintNumber(eventNumber, /NO_DECIMALS) + ' 171 Å Fit'
 
 ; Restore corrected dimming data
-eventName = 'Event' + JPMPrintNumber(eventNumber)
+eventName = 'Event' + JPMPrintNumber(eventNumber, /NO_DECIMALS)
 restore, '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/EVEPlots/Corrected/' + eventName + '/Warm correction/EVEScaledIrradiances.sav'
 restore, '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/EVEPlots/Corrected/' + eventName + '/Warm correction/ExtrapolatedPreFlareTrend.sav'
 
@@ -128,8 +129,8 @@ CASE eventNumber OF ; sodSubsetRangeIndices is for zooming in on just the dimmin
     sodSubsetRangeIndices = where(sod GE 73000 AND sod LE 82500)
     depthTimeSod = 22.74 * 3600
     slopeTimesSod = [21.74 * 3600, 22.50 * 3600]
-    fitToUseForDepth = '5th Order Poly'
-    fitToUseForSlope = '5th Order Poly'
+    fitToUseForDepth = '3rd Order Poly'
+    fitToUseForSlope = '3rd Order Poly'
    END
    6: BEGIN ; Event 6 2011043_12490
     sodSubsetRangeIndices = where(sod GE 11530 AND sod LE 19690)
@@ -189,7 +190,8 @@ CASE eventNumber OF ; sodSubsetRangeIndices is for zooming in on just the dimmin
     fitToUseForSlope = '5th Order Poly'
   END
   15: BEGIN ; Event 15 2011055_26770
-    sodSubsetRangeIndices = where(sod GE 25330 AND sod LE 36850)
+    ;sodSubsetRangeIndices = where(sod GE 25330 AND sod LE 36850)
+    sodSubsetRangeIndices = where(sod GE 22000 AND sod LE 36850)
     depthTimeSod = 8.835 * 3600
     slopeTimesSod = [7.568 * 3600, 8.368 * 3600]
     fitToUseForDepth = '5th Order Poly'
@@ -351,8 +353,8 @@ intensityError = intensityError[sodSubsetRangeIndices]
 ; 2nd Order Poly Fit (Parabola)
 parabolaParameters = poly_fit(sod, intensity, 2, parabolaCurve, CHISQ = parabolaChi, MEASURE_ERRORS = intensityError, YBAND = parabolaError)
 parabolaReducedChi = parabolaChi / (n_elements(sod) - 2.)
-parabolaSlope = deriv(sod / 3600, parabolaCurve)
-parabolaSlopeUncertainty = derivsig(sod / 3600, parabolaCurve, 0.0, parabolaError)
+parabolaSlope = deriv(sod, parabolaCurve)
+parabolaSlopeUncertainty = derivsig(sod, parabolaCurve, 0.0, parabolaError)
 troughIndex = closest(0., parabolaSlope)
 parabolaTroughSod = sod[troughIndex]
 parabolaTroughIntensity = parabolaCurve[troughIndex]
@@ -361,18 +363,18 @@ parabolaTroughUncertainty = parabolaError[troughIndex]
 ; 3rd Order Poly Fit
 poly3Parameters = poly_fit(sod, intensity, 3, poly3Curve, CHISQ = poly3Chi, MEASURE_ERRORS = intensityError, YBAND = poly3Error)
 poly3ReducedChi = poly3Chi / (n_elements(sod) - 5. - 1.)
-poly3Slope = deriv(sod / 3600, poly3Curve)
-poly3SlopeUncertainty = derivsig(sod / 3600, poly3Curve, 0.0, poly3Error)
+poly3Slope = deriv(sod, poly3Curve)
+poly3SlopeUncertainty = derivsig(sod, poly3Curve, 0.0, poly3Error)
 troughIndex = closest(0., poly3Slope)
 poly3TroughSod = sod[troughIndex]
 poly3TroughIntensity = poly3Curve[troughIndex]
 poly3TroughUncertainty = poly3Error[troughIndex]
 
 ; 4th Order Poly Fit
-poly4Parameters = poly_fit(sod, intensity, 4, poly4Curve, CHISQ = poly4Chi, MEASURE_ERRORS = intensityError, YBAND = poly4Error)
+poly4Parameters = poly_fit(sod, intensity, 4, poly4Curve, CHISQ = poly4Chi, MEASURE_ERRORS = intensityError, YBAND = poly4Error, /DOUBLE, STATUS = status)
 poly4ReducedChi = poly4Chi / (n_elements(sod) - 5. - 1.)
-poly4Slope = deriv(sod / 3600, poly4Curve)
-poly4SlopeUncertainty = derivsig(sod / 3600, poly4Curve, 0.0, poly4Error)
+poly4Slope = deriv(sod, poly4Curve)
+poly4SlopeUncertainty = derivsig(sod, poly4Curve, 0.0, poly4Error)
 troughIndex = closest(0., poly4Slope)
 poly4TroughSod = sod[troughIndex]
 poly4TroughIntensity = poly4Curve[troughIndex]
@@ -381,8 +383,8 @@ poly4TroughUncertainty = poly4Error[troughIndex]
 ; 5th Order Poly Fit
 poly5Parameters = poly_fit(sod, intensity, 5, poly5Curve, CHISQ = poly5Chi, MEASURE_ERRORS = intensityError, YBAND = poly5Error, STATUS = status)
 poly5ReducedChi = poly5Chi / (n_elements(sod) - 5. - 1.)
-poly5Slope = deriv(sod / 3600, poly5Curve)
-poly5SlopeUncertainty = derivsig(sod / 3600, poly5Curve, 0.0, poly5Error)
+poly5Slope = deriv(sod, poly5Curve)
+poly5SlopeUncertainty = derivsig(sod, poly5Curve, 0.0, poly5Error)
 troughIndex = closest(0., poly5Slope)
 poly5TroughSod = sod[troughIndex]
 poly5TroughIntensity = poly5Curve[troughIndex]
@@ -530,7 +532,7 @@ IF ~keyword_set(NO_PLOTS) THEN BEGIN
   
   ; Error plot
   p1 = errorplot(sod/3600., intensity, intensityError, '2', BUFFER = useBuffer, $
-                 TITLE = 'Event #' + JPMPrintNumber(eventNumber) + ' - ' + yyyymmdd + ' ' + hhmmss, $
+                 TITLE = 'Event #' + JPMPrintNumber(eventNumber, /NO_DECIMALS) + ' - ' + yyyymmdd + ' ' + hhmmss, $
                  XTITLE = 'Time [Hour]', $
                  YTITLE = 'Pre-flare Relative Intensity [%]', $
                  NAME = 'EVE')
@@ -546,6 +548,8 @@ IF ~keyword_set(NO_PLOTS) THEN BEGIN
   p5 = errorplot(sod/3600., poly5Curve, poly5Error, COLOR = 'orange', '2', /OVERPLOT, ERRORBAR_COLOR = 'orange', $
             YRANGE = p1.YRANGE, $
             NAME = '5th Order Poly')
+  IF eventNumber EQ 15 THEN $
+    p6 = plot([7.583, 7.583], [-5, 1], '--', /OVERPLOT)
   a = arrow([depthTimeSod / 3600, depthTimeSod / 3600], [0., depthIntensity], /DATA, COLOR = arrowColor, THICK = 2)
   s = symbol(slopeTimesSod / 3600, [slopePointLeft, slopePointRight], /DATA, /SYM_FILLED, SYM_COLOR = circleColor, SYM_SIZE = 2, 'circle')
   t1 = text(0.90, 0.82, 'EVE 2 min ave', ALIGNMENT = 1)
@@ -553,9 +557,17 @@ IF ~keyword_set(NO_PLOTS) THEN BEGIN
   t3 = text(0.90, 0.74, '3rd Order Poly $\chi^2$: ' + JPMPrintNumber(poly3ReducedChi),    ALIGNMENT = 1, FONT_COLOR = 'green',  FONT_STYLE = bestChiBoolArray[1])
   t4 = text(0.90, 0.70, '4th Order Poly $\chi^2$: ' + JPMPrintNumber(poly4ReducedChi),    ALIGNMENT = 1, FONT_COLOR = 'blue',   FONT_STYLE = bestChiBoolArray[2])
   t5 = text(0.90, 0.66, '5th Order Poly $\chi^2$: ' + JPMPrintNumber(poly5ReducedChi),    ALIGNMENT = 1, FONT_COLOR = 'orange', FONT_STYLE = bestChiBoolArray[3])
-  t6 = text(0.15, 0.20, 'Dimming Depth = ' + JPMPrintNumber(depthIntensity) + ' ± ' + JPMPrintNumber(depthUncertainty) + '%', FONT_COLOR = arrowColor, FONT_STYLE = 1)
-  t7 = text(0.15, 0.16, 'Dimming Slope = ' + JPMPrintNumber(slope) + ' ± ' + JPMPrintNumber(slopeUncertainty) + '%/hour', FONT_COLOR = circleColor, FONT_STYLE = 1)  
+  t6 = text(0.15, 0.20, 'Dimming Depth = ' + JPMPrintNumber(depthIntensity) + ' ± ' + JPMPrintNumber(depthUncertainty) + ' %', FONT_COLOR = arrowColor, FONT_STYLE = 1)
+  t7 = text(0.15, 0.16, 'Dimming Slope = ' + JPMPrintNumber(slope, /SCIENTIFIC_NOTATION) + ' $\pm$' + JPMPrintNumber(slopeUncertainty, /SCIENTIFIC_NOTATION) + ' %/s', FONT_COLOR = circleColor, FONT_STYLE = 1)  
   p1.save, saveloc + savename + '.png'
+  
+  ; Save parameters to csv file
+  get_lun, lun
+  openw, lun, saveloc + 'Fit Parameters.csv', /APPEND, WIDTH = 160
+  printf, lun, JPMPrintNumber(eventNumber, /NO_DECIMALS), ',', -depthIntensity, ',', depthUncertainty, ',', $
+               JPMPrintNumber(-slope, /EXPONENT_FORM), ',', JPMPrintNumber(slopeUncertainty, /EXPONENT_FORM)
+  close, lun
+  free_lun, lun
   save, FILENAME = saveloc + savename + '.sav'
 ENDIF
 

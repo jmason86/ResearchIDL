@@ -12,7 +12,7 @@
 ;   None
 ;
 ; KEYWORD PARAMETERS:
-;   None
+;   DARK_BACKGROUND: Set this to make the plot background color transparent and flip the dark colors in the plot to light colors (e.g., black -> white text)
 ;
 ; OUTPUTS:
 ;   PNG and EPS versions of plot in 2 directories: 
@@ -34,7 +34,20 @@
 ; MODIFICATION HISTORY:
 ;   2015/10/05: James Paul Mason: Copied and modified from StatisticsOfDimmingFits.pro
 ;-
-PRO PlotDimmingPaper2Figure2BestFitHistogram
+PRO PlotDimmingPaper2Figure2BestFitHistogram, DARK_BACKGROUND = DARK_BACKGROUND
+
+; Defaults
+IF keyword_set(DARK_BACKGROUND) THEN BEGIN
+  foregroundBlackOrWhite = 'white'
+  barFillColor = 'Azure'
+  blueDarkOrLight = 'deep sky blue'
+  backgroundColor = 'black' ; Will be used as the transparency mask for the png
+ENDIF ELSE BEGIN
+  foregroundBlackOrWhite = 'black'
+  barFillColor = 'dark slate grey'
+  blueDarkOrLight = 'blue'
+  backgroundColor = 'white'
+ENDELSE
 
 ; Setup
 saveloc1 = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Two Two Week Period/Fitting/'
@@ -43,10 +56,10 @@ saveloc2 = '/Users/' + getenv('username') + '/Dropbox/Research/Woods_LASP/Papers
 restore, saveloc1 + 'StatisticsOfDimmingFits.sav'
 
 ; Manipulate chi squared data for plotting of histogram (square brackets ensure that if npts = 1, still have an array for barplot)
-parabolaChiXValues = [range(-0.15, 0.15, npts = n_elements(parabolaChis))]
-poly3ChiXValues = [range(0.7, 1.3, npts = n_elements(poly3Chis))]
-poly4ChiXValues = [range(1.85, 2.15, npts = n_elements(poly4Chis))]
-poly5ChiXValues = [range(2.65, 3.35, npts = n_elements(poly5Chis))]
+parabolaChiXValues = [JPMrange(-0.15, 0.15, npts = n_elements(parabolaChis))]
+poly3ChiXValues = [JPMrange(0.7, 1.3, npts = n_elements(poly3Chis))]
+poly4ChiXValues = [JPMrange(1.85, 2.15, npts = n_elements(poly4Chis))]
+poly5ChiXValues = [JPMrange(2.65, 3.35, npts = n_elements(poly5Chis))]
 
 ; Deal with edge case for npts = 1 to still have sensible plot
 IF n_elements(parabolaChis) EQ 1 THEN parabolaHistogramWidth = 0.5 ELSE parabolaHistogramWidth = 1.0
@@ -55,10 +68,10 @@ IF n_elements(pol43Chis) EQ 1 THEN poly4HistogramWidth = 0.5 ELSE poly4Histogram
 IF n_elements(pol53Chis) EQ 1 THEN poly5HistogramWidth = 0.5 ELSE poly5HistogramWidth = 1.0
 
 ; Plot histogram
-w = window(DIMENSIONS = [700, 800])
-b1 = barplot(histogramPlaceHolderX, histogramData, TITLE = '"Best Fit" Histogram', FILL_COLOR = 'dark slate grey', /CURRENT, MARGIN = 0.1, AXIS_STYLE = 1, $
-             XTEXT_ORIENTATION = 60, XMINOR = 0, $
-             YTITLE = 'Number of ' + JPMPrintNumber(numberOfEvents) + ' Events With Best Fit', YRANGE = [0, 20])
+w = window(DIMENSIONS = [700, 800], BACKGROUND_COLOR = backgroundColor)
+b1 = barplot(histogramPlaceHolderX, histogramData, TITLE = '"Best Fit" Histogram', FONT_COLOR = foregroundBlackOrWhite, FILL_COLOR = barFillColor, /CURRENT, MARGIN = 0.1, AXIS_STYLE = 1, $
+             XTEXT_ORIENTATION = 60, XMINOR = 0, XCOLOR = foregroundBlackOrWhite, $
+             YTITLE = 'Number of ' + JPMPrintNumber(numberOfEvents, /NO_DECIMALS) + ' Events With Best Fit', YRANGE = [0, 20], YCOLOR = foregroundBlackOrWhite)
 b1.XTICKNAME = names
 
 IF numberOfParabolas NE 0 THEN $
@@ -77,12 +90,16 @@ IF numberOf5Polys NE 0 THEN $
   b5 = barplot(poly5ChiXValues, poly5Chis, FILL_COLOR = 'red', TRANSPARENCY = 20, WIDTH = poly5HistogramWidth, /CURRENT, MARGIN = 0.1, AXIS_STYLE = 4, $
                XRANGE = b1.XRANGE, $
                YRANGE = [0, 30])
-ax1 = axis('X', LOCATION = 'top', TARGET = [b5], TEXT_COLOR = 'white', MINOR = 0)
+ax1 = axis('X', LOCATION = 'top', TARGET = [b5], COLOR = foregroundBlackOrWhite, SHOWTEXT = 0, MINOR = 0)
 ax2 = axis('Y', LOCATION = 'right', TARGET = [b5], TITLE = 'Reduced $\chi^2$', COLOR = 'red')
 
-b1.save, saveloc1 + 'Best Fit Histogram.png'
-b1.save, saveloc2 + 'PNGs/BestFitHistogram.png'
-b1.save, saveloc2 + 'EPSs/BestFitHistogram.eps'
-save, FILENAME = saveloc2 + 'IDLSavesets/Figure2Saveset.sav', /COMPRESS
+STOP
+IF keyword_set(DARK_BACKGROUND) THEN b1.save, '/Users/jmason86/Dropbox/Research/Woods_LASP/Presentations/20160425 PhD Defense/Images/BestFitHistogram.png', /TRANSPARENT $
+ELSE BEGIN
+  b1.save, saveloc1 + 'Best Fit Histogram.png'
+  b1.save, saveloc2 + 'PNGs/BestFitHistogram.png'
+  b1.save, saveloc2 + 'EPSs/BestFitHistogram.eps'
+  save, FILENAME = saveloc2 + 'IDLSavesets/Figure2Saveset.sav', /COMPRESS
+ENDELSE
 
 END
