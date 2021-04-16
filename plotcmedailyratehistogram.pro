@@ -59,7 +59,7 @@ PRO PlotCmeDailyRateHistogram
   p1 = barplot(xbin, pdf_normalized, FONT_SIZE=fontSize, FILL_COLOR='dark grey', $
                ;title = 'Histogram of Solar CME Daily Rate ($\mu$ = ' + jpmprintnumber(mean(daily_rate)) + ')', $
                xtitle='# CMEs/day', $
-               ytitle='probability density')
+               ytitle='relative probability')
   p2 = plot(xbin, poisson_normalized, '2--', symbol='o', /SYM_FILLED, /OVERPLOT, $
             name='Poisson distribution')
   l = legend(target = p2, position=[0.92, 0.85], FONT_SIZE=fontSize-4)
