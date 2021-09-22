@@ -47,12 +47,12 @@ PRO EVEMultipleLightCurves, startYYYYDOY, endYYYYDOY, PERCENT = PERCENT, REFEREN
 IF ~keyword_set(STACKED_PLOT) AND ~keyword_set(OVERPLOT) THEN STACKED_PLOT = 1
 IF keyword_set(PERCENT) AND ~keyword_set(REFERENCE_SECOND) THEN REFERENCE_SECOND = 0
 IF ~keyword_set(PERCENT) THEN xRangeStart = 0 ELSE xRangeStart = REFERENCE_SECOND
-;saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/2010219_07AUG_1824_M1.0/'
+saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/2010219_07AUG_1824_M1.0/'
 ;saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/2011083_24MAR_1207_M1.0/'
-saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/2011216_04AUG_0357_M9.3/'
+;saveloc = '/Users/jama6159/Dropbox/Research/Woods_LASP/Analysis/Coronal Dimming Analysis/Case Studies/2011216_04AUG_0357_M9.3/'
 
 IF keyword_set(PERCENT) THEN BEGIN
-  GetEVEInPercentChange, startYYYYDOY, endYYYYDOY, REFERENCE_TIME = REFERENCE_SECOND, eveLines, sod
+  GetEVEInPercentChange, startYYYYDOY, endYYYYDOY, REFERENCE_TIME = REFERENCE_SECOND, percentChangeOut=eveLines, jdOut=jd
   ; Get rid of the second day since I didn't really want it
   eveLines = eveLines[*,0:n_elements(eveLines[0, *]) / 2]
   sod = sod[0:n_elements(sod) / 2]
@@ -260,6 +260,7 @@ p8 = plot(sod, eve256, '2', /CURRENT, POSITION = [0.13, (2 * plotHeight) + (2 * 
   g1 = plot([(goesEventStartTime + 43200.)/86400, (goesEventStartTime + 43200.)/86400], p10.YRANGE, '--', /OVERPLOT)
   g2 = plot([(goesEventPeakTime + 43200.)/86400, (goesEventPeakTime + 43200.)/86400], p10.YRANGE, '--', /OVERPLOT)
   t = text(0.03, 0.5, '% Change', ALIGNMENT = 0.5, ORIENTATION = 90, FONT_SIZE = 30)
+  STOP
   p1.save, saveloc + strtrim(startYYYYDOY, 2) + 'EVE Light Curves Stacked ' + savePercentOrNot + '.png'
   IF keyword_set(PUBLICATION) THEN p1.save, saveloc + strtrim(startYYYYDOY, 2) + 'Eve Light Curves Stacked ' + savePercentOrNot + '.eps'
 ENDIF
