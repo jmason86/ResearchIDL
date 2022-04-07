@@ -1,21 +1,21 @@
 ;+
 ; NAME:
-;   GoesFlareClassHistogram
+;   plot_goes_flare_class_histogram
 ;
 ; PURPOSE:
-;
+;   Create a histogram showing how flares have been classified
 ;
 ; INPUTS:
-;
+;   None
 ;
 ; OPTIONAL INPUTS:
-;
+;   None
 ;
 ; KEYWORD PARAMETERS:
-;
+;   None
 ;
 ; OUTPUTS:
-;
+;   
 ;
 ; OPTIONAL OUTPUTS:
 ;
@@ -24,14 +24,15 @@
 ;
 ;
 ; EXAMPLE:
-;
-;
-; MODIFICATION HISTORY:
-;   2012-07-05: James Paul Mason: Wrote script.
+;   Just run it! 
 ;-
-PRO GoesFlareClassHistogram
+PRO plot_goes_flare_class_histogram
 
-restore, '/Users/jmason86/Dropbox/Research/Data/GOES/events/GoesEventsGoes15Era.sav'
+; Defaults
+dataloc = '~/Dropbox/Research/Data/GOES/events/'
+saveloc = '~/Dropbox/Apps/Overleaf/Flare Frequency Distribution (FFD)/figures/'
+
+restore, dataloc + 'GoesEventsGoes15Era.sav'
 
 class = strtrim(goesevents.st$class, 2)
 flux = goesevents.flux
