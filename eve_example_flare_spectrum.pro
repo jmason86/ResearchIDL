@@ -1,6 +1,8 @@
 PRO eve_example_flare_spectrum 
 
-eve = eve_read_whole_fits('/Users/jmason86/Downloads/EVS_L2_2011307_20_006_02.fit.gz')
+eve = eve_read_whole_fits('/Users/' + getenv('username') + '/Dropbox/Research/Data/SDO/EVE/EVS_L2_2011307_20_006_02.fit.gz')
+eve = eve_read_whole_fits('/Users/masonjp2/Downloads/EVS_L2_2013136_09_007_02.fit.gz')
+
 
 spectra = eve.spectrum
 wave = eve.spectrummeta.wavelength
